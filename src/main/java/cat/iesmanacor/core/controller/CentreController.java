@@ -38,7 +38,7 @@ public class CentreController {
     @GetMapping("/proves/notificacio")
     public ResponseEntity<Notificacio> provesNotificacio() throws MessagingException, GeneralSecurityException, IOException {
         Notificacio notificacio = new Notificacio();
-        notificacio.setNotifyMessage("Prova de notificacio");
+        notificacio.setNotifyMessage("Prova de notificació. Cap acció realitzada.");
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
