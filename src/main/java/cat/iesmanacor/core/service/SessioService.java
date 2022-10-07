@@ -84,10 +84,19 @@ public class SessioService {
 
     public List<SessioDto> findSessionsPares(){
         ModelMapper modelMapper = new ModelMapper();
-        List<Long> idActivitatsPares = activitatRepository.findAll().stream().filter(s->s.getGestibNom().toLowerCase().contains("pares")).map(s->s.getIdactivitat()).collect(Collectors.toList());
-        List<Sessio> sessions = sessioRepository.findAll().stream().filter(s->idActivitatsPares.contains(s.getGestibActivitat())).collect(Collectors.toList());
-        System.out.println("Num sessions"+sessions.size());
-        return sessions.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
+        List<Activitat> activitatsPares = activitatRepository.findAll().stream().filter(s->s.getGestibNom().toLowerCase().contains("pares")).collect(Collectors.toList());
+        List<Sessio> sessions = sessioRepository.findAll();
+        List<Sessio> result = new ArrayList<>();
+
+        for(Activitat activitat:activitatsPares){
+            for(Sessio sessio: sessions){
+                if(sessio.getGestibActivitat()!=null && !sessio.getGestibActivitat().isEmpty() && activitat.getGestibIdentificador().equals(sessio.getGestibActivitat())){
+                    result.add(sessio);
+                }
+            }
+        }
+        System.out.println("Num sessions"+result.size()+"idactivitat pares"+activitatsPares.size());
+        return result.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
     }
 }
 
