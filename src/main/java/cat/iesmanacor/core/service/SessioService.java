@@ -86,6 +86,7 @@ public class SessioService {
         ModelMapper modelMapper = new ModelMapper();
         List<Long> idActivitatsPares = activitatRepository.findAll().stream().filter(s->s.getGestibNom().toLowerCase().contains("pares")).map(s->s.getIdactivitat()).collect(Collectors.toList());
         List<Sessio> sessions = sessioRepository.findAll().stream().filter(s->idActivitatsPares.contains(s.getGestibActivitat())).collect(Collectors.toList());
+        System.out.println("Num sessions"+sessions.size());
         return sessions.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
     }
 }

@@ -30,7 +30,7 @@ public class SessioController {
 
 
     @GetMapping("/sessio/pares")
-    public ResponseEntity<List<SessioDto>> getSessionsAtencioPares() throws MessagingException, GeneralSecurityException, IOException {
+    public ResponseEntity<List<SessioDto>> getSessionsAtencioPares() {
         List<SessioDto> sessions = sessioService.findSessionsPares();
         return new ResponseEntity<>(sessions, HttpStatus.OK);
     }
