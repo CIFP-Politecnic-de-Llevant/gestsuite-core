@@ -449,6 +449,9 @@ public class SincronitzacioController {
 
 
             //Cursos i Grups
+            resultat.add("CURSOS I GRUPS");
+            resultat.add("");
+
             NodeList nodesCurs = doc.getElementsByTagName("CURS");
 
             for (int i = 0; i < nodesCurs.getLength(); i++) {
@@ -492,6 +495,9 @@ public class SincronitzacioController {
 
             //Professors
             if (centre.getSincronitzaProfessors()) {
+                resultat.add("PROFESSORAT");
+                resultat.add("");
+
                 NodeList nodesProfessor = doc.getElementsByTagName("PROFESSOR");
                 for (int i = 0; i < nodesProfessor.getLength(); i++) {
                     Node node = nodesProfessor.item(i);
@@ -514,29 +520,33 @@ public class SincronitzacioController {
                             //Si estava inactiu i ara passa a actiu
                             if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
                                 resultat.add("El professor " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
+                            } else {
+                                u = usuariService.findByGestibCodi(codi);
+                                //Si estava inactiu i ara passa a actiu
+                                if (u!=null) {
+                                    //Si estava inactiu i ara passa a actiu
+                                    if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
+                                        resultat.add("El professor " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
+                                    }
+                                } else {
+                                    resultat.add("El professor "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
+                                }
                             }
                         }  else {
-                            resultat.add("a) El professor "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
+                            resultat.add("El professor "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
                         }
 
-                        u = usuariService.findByGestibCodi(codi);
-                        //Si estava inactiu i ara passa a actiu
-                        if (u!=null) {
-                            //Si estava inactiu i ara passa a actiu
-                            if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
-                                resultat.add("El professor " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
-                            }
-                        } else {
-                            resultat.add("b) El professor "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
-                        }
+
 
                     }
                 }
             }
 
             //Alumnes
-
             if (centre.getSincronitzaAlumnes()) {
+                resultat.add("ALUMNAT");
+                resultat.add("");
+
                 //Esborrem els grups, els tornarem a calcular
                 //Fem una còpia dels alumnes en aquest estat per saber després si ha canviat el grup original o no.
                 List<UsuariDto> alumnesOld = new ArrayList<>();
@@ -570,54 +580,80 @@ public class SincronitzacioController {
                             Long idusuari = u.getIdusuari();
                             UsuariDto alumneOld = alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null);
                             if (!this.usuariTeGrup(alumneOld, grup) && u.getGsuiteEmail() != null) {
-                                resultat.add("L'alumne " + u.getGsuiteEmail() + " ha canviat de grup.");
+                                String infoAlumne = "L'alumne " + u.getGsuiteEmail() + " ha canviat de grup.";
 
                                 GrupDto grupOld = null;
                                 if(alumneOld!=null) {
                                     grupOld = grupService.findByGestibIdentificador(alumneOld.getGestibGrup());
                                 }
                                 if(grupOld!=null){
-                                    CursDto cursAlumne = cursService.findByGestibIdentificador(grupOld.getGestibIdentificador());
+                                    CursDto cursAlumne = cursService.findByGestibIdentificador(grupOld.getGestibCurs());
                                     if(cursAlumne!=null) {
-                                        resultat.add("Grup antic: " + cursAlumne.getGestibNom() + grupOld.getGestibNom());
+                                        infoAlumne += " Grup antic: " + cursAlumne.getGestibNom() + grupOld.getGestibNom();
                                     }
                                 }
 
-                                GrupDto grupNew = grupService.findByGestibIdentificador(codi);
+                                GrupDto grupNew = grupService.findByGestibIdentificador(grup);
                                 if(grupNew!=null){
-                                    CursDto cursAlumne = cursService.findByGestibIdentificador(grupNew.getGestibIdentificador());
+                                    CursDto cursAlumne = cursService.findByGestibIdentificador(grupNew.getGestibCurs());
                                     if(cursAlumne!=null) {
-                                        resultat.add("Grup nou: " + cursAlumne.getGestibNom() + grupNew.getGestibNom());
+                                        infoAlumne +=" Grup nou: " + cursAlumne.getGestibNom() + grupNew.getGestibNom();
                                     }
                                 }
 
+                                resultat.add(infoAlumne);
                             }
                         } else {
-                            resultat.add("L'alumne "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
+                            u = usuariService.findByGestibCodi(codi);
+
+                            if(u!=null) {
+                                //Si estava inactiu i ara passa a actiu
+                                if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
+                                    resultat.add("L'alumne " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
+                                }
+
+                                //Si ha canviat de grup l'actualitzem
+                                Long idusuari = u.getIdusuari();
+                                UsuariDto alumneOld = alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null);
+                                if (!this.usuariTeGrup(alumneOld, grup) && u.getGsuiteEmail() != null) {
+                                    String infoAlumne = "L'alumne " + u.getGsuiteEmail() + " ha canviat de grup.";
+
+                                    GrupDto grupOld = null;
+                                    if(alumneOld!=null) {
+                                        grupOld = grupService.findByGestibIdentificador(alumneOld.getGestibGrup());
+                                    }
+                                    if(grupOld!=null){
+                                        CursDto cursAlumne = cursService.findByGestibIdentificador(grupOld.getGestibCurs());
+                                        if(cursAlumne!=null) {
+                                            infoAlumne += " Grup antic: " + cursAlumne.getGestibNom() + grupOld.getGestibNom();
+                                        }
+                                    }
+
+                                    GrupDto grupNew = grupService.findByGestibIdentificador(grup);
+                                    if(grupNew!=null){
+                                        CursDto cursAlumne = cursService.findByGestibIdentificador(grupNew.getGestibCurs());
+                                        if(cursAlumne!=null) {
+                                            infoAlumne +=" Grup nou: " + cursAlumne.getGestibNom() + grupNew.getGestibNom();
+                                        }
+                                    }
+
+                                    resultat.add(infoAlumne);
+                                }
+                            } else {
+                                resultat.add("L'alumne "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
+                            }
                         }
 
-                        u = usuariService.findByGestibCodi(codi);
 
-                        if(u!=null) {
-                            //Si estava inactiu i ara passa a actiu
-                            if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
-                                resultat.add("L'alumne " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
-                            }
-
-                            //Si ha canviat de grup l'actualitzem
-                            Long idusuari = u.getIdusuari();
-                            if (!this.usuariTeGrup(alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null), grup) && u.getGsuiteEmail() != null) {
-                                resultat.add("L'alumne " + u.getGsuiteEmail() + " ha canviat de grup");
-                            }
-                        } else {
-                            resultat.add("L'alumne "+nom+ " "+ap1+" "+ap2+" no existeix. Es crearà un compte d'usuari a GSuite");
-                        }
                     }
                 }
             }
 
 
             //Departaments
+            resultat.add("DEPARTAMENTS");
+            resultat.add("");
+
             NodeList nodesDepartament = doc.getElementsByTagName("DEPARTAMENT");
 
             for (int i = 0; i < nodesDepartament.getLength(); i++) {
@@ -635,6 +671,9 @@ public class SincronitzacioController {
             }
 
             //Activitats
+            resultat.add("ACTIVITATS");
+            resultat.add("");
+
             NodeList nodesActivitat = doc.getElementsByTagName("ACTIVITAT");
 
             for (int i = 0; i < nodesActivitat.getLength(); i++) {
@@ -661,7 +700,9 @@ public class SincronitzacioController {
                     curta="BG-A"
                 />
              */
-            //Eliminem totes les submateries per tornar-les a crear de nou
+            resultat.add("SUBMATÈRIES");
+            resultat.add("");
+
             NodeList nodesSubmateria = doc.getElementsByTagName("SUBMATERIA");
 
             for (int i = 0; i < nodesSubmateria.getLength(); i++) {
@@ -685,6 +726,9 @@ public class SincronitzacioController {
 
 
             //Gsuite
+            resultat.add("SINCRONITZACIÓ AMB GSUITE");
+            resultat.add("");
+
             List<User> gsuiteUsers = gSuiteService.getUsers();
 
             for (User gsuiteUser : gsuiteUsers) {
