@@ -9,6 +9,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.calendar.model.Acl;
 import com.google.api.services.calendar.model.AclRule;
 import com.google.api.services.directory.Directory;
 import com.google.api.services.directory.DirectoryScopes;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -636,6 +638,26 @@ public class GSuiteService {
         }
 
         return result;
+    }
+
+    public void getUsersByCalendar(String emailCalendar) throws IOException, GeneralSecurityException {
+        String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
+        GoogleCredentials credentials = null;
+
+        credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+
+        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
+
+        Acl acl = service.acl().list(emailCalendar).execute();
+
+        for (AclRule rule : acl.getItems()) {
+            System.out.println(rule.getId() + ": " + rule.getRole());
+        }
+
     }
 
     public void insertUserCalendar(String emailUser, String emailCalendar) {

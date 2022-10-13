@@ -14,5 +14,6 @@ public @Data class CalendariDto {
     private String gsuiteEmail;
     private String gsuiteNom;
     private String gsuiteDescripcio;
-    private Set<UsuariDto> usuaris = new HashSet<>();
+    private Set<UsuariDto> usuarisLectura = new HashSet<>();
+    private Set<UsuariDto> usuarisEdicio = new HashSet<>();
 }
