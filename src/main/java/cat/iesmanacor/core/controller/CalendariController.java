@@ -65,7 +65,7 @@ public class CalendariController {
     }
 
     @GetMapping("calendari/findByEmail/{email}")
-    public ResponseEntity<CalendariDto> getGrupsByCurs(@PathVariable("email") String email) throws InterruptedException, GeneralSecurityException, IOException {
+    public ResponseEntity<CalendariDto> getCalendariByEmail(@PathVariable("email") String email) throws InterruptedException, GeneralSecurityException, IOException {
         CalendariDto calendari = calendariService.findByEmail(email);
 
         List<UsuariDto> usuaris = usuariService.findAll();
@@ -80,22 +80,22 @@ public class CalendariController {
 
         for (AclRule rule : usauarisPermis) {
             if(rule.getRole().equals(CalendariRolDto.LECTOR.getRol()) && rule.getScope().getType().equals(CalendariTipusUsuariDto.USUARI.getTipus())){
-                UsuariDto usuari = usuaris.stream().filter(u->u.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
+                UsuariDto usuari = usuaris.stream().filter(u->u.getGsuiteEmail()!=null && u.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
                 if(usuari!=null) {
                     usuarisLectura.add(usuari);
                 }
             } else if(rule.getRole().equals(CalendariRolDto.LECTOR_ESCRIPTOR.getRol()) && rule.getScope().getType().equals(CalendariTipusUsuariDto.USUARI.getTipus())) {
-                UsuariDto usuari = usuaris.stream().filter(u->u.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
+                UsuariDto usuari = usuaris.stream().filter(u->u.getGsuiteEmail()!=null && u.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
                 if(usuari!=null) {
                     usuarisEscriptura.add(usuari);
                 }
             }else if(rule.getRole().equals(CalendariRolDto.LECTOR.getRol()) && rule.getScope().getType().equals(CalendariTipusUsuariDto.GRUP.getTipus())) {
-                GrupCorreuDto grupCorreu = grupsCorreu.stream().filter(gc->gc.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
+                GrupCorreuDto grupCorreu = grupsCorreu.stream().filter(gc->gc.getGsuiteEmail()!=null && gc.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
                 if(grupCorreu!=null) {
                     grupsLectura.add(grupCorreu);
                 }
             }else if(rule.getRole().equals(CalendariRolDto.LECTOR_ESCRIPTOR.getRol()) && rule.getScope().getType().equals(CalendariTipusUsuariDto.GRUP.getTipus())) {
-                GrupCorreuDto grupCorreu = grupsCorreu.stream().filter(gc->gc.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
+                GrupCorreuDto grupCorreu = grupsCorreu.stream().filter(gc->gc.getGsuiteEmail()!=null && gc.getGsuiteEmail().equals(rule.getScope().getValue())).findFirst().orElse(null);
                 if(grupCorreu!=null) {
                     grupsEscriptura.add(grupCorreu);
                 }
