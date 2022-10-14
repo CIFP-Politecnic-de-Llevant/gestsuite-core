@@ -7,6 +7,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CalendariRepository extends JpaRepository<Calendari, Long> {
     Calendari findCalendariByGsuiteEmail(String email);
-
-    Calendari findCalendariByGestibGrup(String gestibGrup);
 }

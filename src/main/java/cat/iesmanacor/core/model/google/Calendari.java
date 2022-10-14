@@ -20,10 +20,6 @@ public @Data class Calendari {
     @Enumerated(EnumType.STRING)
     private CalendariTipus calendariTipus;
 
-    /* GESTIB */
-    @Column(name = "gestib_grup", nullable = true, length = 255)
-    private String gestibGrup;
-
     /* GSUITE */
     @Column(name = "gsuite_email", nullable = true, length = 1024)
     private String gsuiteEmail;
@@ -39,4 +35,10 @@ public @Data class Calendari {
 
     @ManyToMany
     private Set<Usuari> usuarisEdicio = new HashSet<>();
+
+    @ManyToMany
+    private Set<GrupCorreu> grupCorreuLectura = new HashSet<>();
+
+    @ManyToMany
+    private Set<GrupCorreu> grupCorreuEdicio = new HashSet<>();
 }

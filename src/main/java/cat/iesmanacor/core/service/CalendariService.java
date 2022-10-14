@@ -36,7 +36,6 @@ public class CalendariService {
         c.setGsuiteEmail(email);
         c.setGsuiteNom(nom);
         c.setGsuiteDescripcio(descripcio);
-        c.setGestibGrup(grup);
         c.setCalendariTipus(calendariTipus);
 
         Calendari calendariSaved = calendariRepository.save(c);
@@ -53,12 +52,6 @@ public class CalendariService {
     public List<CalendariDto> findAll() {
         ModelMapper modelMapper = new ModelMapper();
         return calendariRepository.findAll().stream().map(c->modelMapper.map(c,CalendariDto.class)).collect(Collectors.toList());
-    }
-
-    public CalendariDto findByGestibGrup(String gestibGrup) {
-        ModelMapper modelMapper = new ModelMapper();
-        Calendari calendari =  calendariRepository.findCalendariByGestibGrup(gestibGrup);
-        return modelMapper.map(calendari,CalendariDto.class);
     }
 
 }

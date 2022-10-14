@@ -23,12 +23,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -640,7 +638,7 @@ public class GSuiteService {
         return result;
     }
 
-    public void getUsersByCalendar(String emailCalendar) throws IOException, GeneralSecurityException {
+    public List<AclRule> getUsersByCalendar(String emailCalendar) throws IOException, GeneralSecurityException {
         String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
         GoogleCredentials credentials = null;
 
@@ -654,10 +652,11 @@ public class GSuiteService {
 
         Acl acl = service.acl().list(emailCalendar).execute();
 
-        for (AclRule rule : acl.getItems()) {
+        /*for (AclRule rule : acl.getItems()) {
             System.out.println(rule.getId() + ": " + rule.getRole()+"::"+rule.getScope().getValue()+"::"+rule.getScope().getType());
-        }
+        }*/
 
+        return acl.getItems();
     }
 
     public void insertUserCalendar(String emailUser, String emailCalendar) {
