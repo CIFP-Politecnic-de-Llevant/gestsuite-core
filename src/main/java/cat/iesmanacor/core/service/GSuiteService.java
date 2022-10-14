@@ -655,7 +655,7 @@ public class GSuiteService {
         Acl acl = service.acl().list(emailCalendar).execute();
 
         for (AclRule rule : acl.getItems()) {
-            System.out.println(rule.getId() + ": " + rule.getRole());
+            System.out.println(rule.getId() + ": " + rule.getRole()+"::"+rule.getScope().getValue()+"::"+rule.getScope().getType());
         }
 
     }

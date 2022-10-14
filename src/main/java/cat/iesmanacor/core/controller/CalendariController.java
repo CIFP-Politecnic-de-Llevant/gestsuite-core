@@ -1,5 +1,7 @@
 package cat.iesmanacor.core.controller;
 
+import cat.iesmanacor.core.dto.gestib.CursDto;
+import cat.iesmanacor.core.dto.gestib.GrupDto;
 import cat.iesmanacor.core.dto.google.CalendariDto;
 import cat.iesmanacor.core.dto.google.CalendariTipusDto;
 import cat.iesmanacor.core.service.CalendariService;
@@ -9,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class CalendariController {
@@ -26,7 +30,7 @@ public class CalendariController {
     private CalendariService calendariService;
 
     @GetMapping("/calendari/llistat")
-    public ResponseEntity<List<CalendariDto>> getGrups(HttpServletRequest request) throws GeneralSecurityException, IOException {
+    public ResponseEntity<List<CalendariDto>> getCalendaris(HttpServletRequest request) throws GeneralSecurityException, IOException {
         /*
         Sincronització GSuite -> BBDD
         Si el grup NO existeix creem el grup a la BBDD i associem els usuaris
@@ -47,6 +51,13 @@ public class CalendariController {
         List<CalendariDto> calendaris = calendariService.findAll();
 
         return new ResponseEntity<>(calendaris, HttpStatus.OK);
+    }
+
+    @GetMapping("calendari/findByEmail/{email}")
+    public ResponseEntity<CalendariDto> getGrupsByCurs(@PathVariable("email") String email) throws InterruptedException, GeneralSecurityException, IOException {
+        CalendariDto calendari = calendariService.findByEmail(email);
+        gSuiteService.getUsersByCalendar(email);
+        return new ResponseEntity<>(calendari, HttpStatus.OK);
     }
 
 }
