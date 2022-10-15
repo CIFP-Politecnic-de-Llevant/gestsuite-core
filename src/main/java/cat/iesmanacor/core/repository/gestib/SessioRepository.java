@@ -11,4 +11,6 @@ public interface SessioRepository extends JpaRepository<Sessio, Long> {
     List<Sessio> findAllByGestibProfessor(String professor);
 
     List<Sessio> findAllByGestibAlumne(String alumne);
+
+    List<Sessio> findAllByGestibGrup(String grup);
 }

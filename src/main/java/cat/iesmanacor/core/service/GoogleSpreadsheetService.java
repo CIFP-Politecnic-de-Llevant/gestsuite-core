@@ -5,16 +5,10 @@ import cat.iesmanacor.core.dto.gestib.UsuariDto;
 import cat.iesmanacor.core.dto.google.DispositiuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
-import cat.iesmanacor.core.model.gestib.Curs;
-import cat.iesmanacor.core.model.gestib.Departament;
-import cat.iesmanacor.core.model.gestib.Grup;
-import cat.iesmanacor.core.model.gestib.Usuari;
+import cat.iesmanacor.core.model.gestib.*;
 import cat.iesmanacor.core.model.google.GrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreuTipus;
-import cat.iesmanacor.core.repository.gestib.CursRepository;
-import cat.iesmanacor.core.repository.gestib.DepartamentRepository;
-import cat.iesmanacor.core.repository.gestib.GrupRepository;
-import cat.iesmanacor.core.repository.gestib.UsuariRepository;
+import cat.iesmanacor.core.repository.gestib.*;
 import cat.iesmanacor.core.repository.google.GrupCorreuRepository;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -72,6 +66,12 @@ public class GoogleSpreadsheetService {
 
     @Autowired
     private DepartamentRepository departamentRepository;
+
+    @Autowired
+    private SubmateriaRepository submateriaRepository;
+
+    @Autowired
+    private  SessioRepository sessioRepository;
 
 
     public void helloSpreadsheets() throws IOException, GeneralSecurityException {
@@ -235,6 +235,162 @@ public class GoogleSpreadsheetService {
                 cellsRowAlumne.add(writeCell(alumne.getGestibCognom2()));
                 cellsRowAlumne.add(writeCell(alumne.getGestibNom()));
                 cellsRowAlumne.add(writeCell(alumne.getGsuiteEmail()));
+
+                RowData rowAlumne = new RowData();
+                rowAlumne.setValues(cellsRowAlumne);
+                rows.add(rowAlumne);
+            }
+
+
+            List<GridData> dades = new ArrayList<>();
+            GridData d = new GridData();
+            d.setStartColumn(0);
+            d.setStartRow(0);
+            d.setRowData(rows);
+            dades.add(d);
+
+            s.setData(dades);
+
+            sheets.add(s);
+        }
+
+
+        Spreadsheet spreadsheet = new Spreadsheet()
+                .setProperties(new SpreadsheetProperties()
+                        .setTitle("Alumnat per grup - " + today));
+
+        spreadsheet.setSheets(sheets);
+
+        spreadsheet = service.spreadsheets().create(spreadsheet)
+                .setFields("spreadsheetId,spreadsheetUrl,properties")
+                .execute();
+
+        System.out.println("Spreadsheet ID: " + spreadsheet.getSpreadsheetId());
+        System.out.println("Spreadsheet URL: " + spreadsheet.getSpreadsheetUrl());
+        System.out.println("Spreadsheet Title: " + spreadsheet.getProperties().getTitle());
+        return spreadsheet;
+    }
+
+    public Spreadsheet alumnesGrupPendents(List<GrupDto> grups, String myEmail) throws IOException, GeneralSecurityException {
+        ModelMapper modelMapper = new ModelMapper();
+        //List<Grup> grups = grupRepository.findAll();
+
+        grups.sort((g1, g2) -> {
+            Curs c1 = cursRepository.findCursByGestibIdentificador(g1.getGestibCurs());
+            Curs c2 = cursRepository.findCursByGestibIdentificador(g2.getGestibCurs());
+
+            String str1 = c1.getGestibNom() + g1.getGestibNom();
+            String str2 = c2.getGestibNom() + g2.getGestibNom();
+
+            return str1.compareTo(str2);
+        });
+
+        LocalDate localDate = LocalDate.now();
+        String today = localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        String[] scopes = {SheetsScopes.SPREADSHEETS};
+
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(myEmail);
+        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
+
+        List<Sheet> sheets = new ArrayList<>();
+
+        for (GrupDto g : grups) {
+            Curs c = cursRepository.findCursByGestibIdentificador(g.getGestibCurs());
+            List<GrupCorreu> grupsCorreu = grupCorreuRepository.findAll().stream().filter(gc->{
+                Set<Grup> gcGrups = gc.getGrups();
+                return gcGrups.stream().anyMatch(gcGrup -> gcGrup.getIdgrup().equals(g.getIdgrup()));
+            }).collect(Collectors.toList());
+            String grupsCorreuStr = grupsCorreu.stream().filter(gc -> gc.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT)).map(GrupCorreu::getGsuiteEmail).collect(Collectors.joining(", "));
+
+
+            List<UsuariDto> alumnes = usuariRepository.findAllByGestibGrupOrGestibGrup2OrGestibGrup3(g.getGestibIdentificador(), g.getGestibIdentificador(), g.getGestibIdentificador()).stream().map(u->modelMapper.map(u,UsuariDto.class)).collect(Collectors.toList());
+            alumnes.sort((a1, a2) -> {
+                String str1 = a1.getGestibCognom1() + " " + a1.getGestibCognom2() + ", " + a1.getGestibNom();
+                String str2 = a2.getGestibCognom1() + " " + a2.getGestibCognom2() + ", " + a2.getGestibNom();
+
+                return str1.compareTo(str2);
+            });
+
+            List<Sessio> sessionsGrup = sessioRepository.findAllByGestibGrup(g.getGestibIdentificador());
+
+            Sheet s = new Sheet();
+
+            //Propietats de la pàgina
+            SheetProperties sproperties = new SheetProperties();
+            sproperties.setTitle(c.getGestibNom() + " " + g.getGestibNom());
+            s.setProperties(sproperties);
+
+            //Dades de la pàgina
+            List<RowData> rows = new ArrayList<>();
+
+            //Row 1
+            List<CellData> cellsRow1 = new ArrayList<>();
+            cellsRow1.add(writeCell("GRUP DE CORREU", true));
+            cellsRow1.add(writeCell(grupsCorreuStr));
+            cellsRow1.add(writeCell("Data llistat", true));
+            cellsRow1.add(writeCell(today));
+
+            RowData row1 = new RowData();
+            row1.setValues(cellsRow1);
+            rows.add(row1);
+
+            //Row 2
+            List<CellData> cellsRow2 = new ArrayList<>();
+            cellsRow2.add(writeCell(""));
+
+            RowData row2 = new RowData();
+            row2.setValues(cellsRow2);
+            rows.add(row2);
+
+            //Row 3
+            List<CellData> cellsRow3 = new ArrayList<>();
+            cellsRow3.add(writeCell("ORDRE", true));
+            cellsRow3.add(writeCell("Primer llinatge", true));
+            cellsRow3.add(writeCell("Segon Llinatge", true));
+            cellsRow3.add(writeCell("Nom", true));
+            cellsRow3.add(writeCell("Correu Corporatiu", true));
+            cellsRow3.add(writeCell("Pendents", true));
+
+            RowData row3 = new RowData();
+            row3.setValues(cellsRow3);
+            rows.add(row3);
+
+            //Row alumnes
+            int i = 1;
+            for (UsuariDto alumne : alumnes) {
+                List<Sessio> sessionsAlumne = sessioRepository.findAllByGestibAlumne(alumne.getGestibCodi());
+                List<String> resultPendents = new ArrayList<>();
+
+                //Les pendents són les submateries que NO apareixen dins les submateries del grup
+                for(Sessio sessioAlumne: sessionsAlumne){
+                    boolean submateriaTrobada = false;
+                    for(Sessio sessioGrup: sessionsGrup){
+                        if (sessioAlumne.getGestibSubmateria()!=null && sessioAlumne.getGestibSubmateria().equals(sessioGrup.getGestibSubmateria())) {
+                            submateriaTrobada = true;
+                            break;
+                        }
+                    }
+                    if(!submateriaTrobada){
+                        Submateria submateria = submateriaRepository.findSubmateriaByGestibIdentificador(sessioAlumne.getGestibSubmateria());
+                        if(submateria.getGestibNom()!=null) {
+                            resultPendents.add(submateria.getGestibNom());
+                        }
+                    }
+                }
+
+
+                List<CellData> cellsRowAlumne = new ArrayList<>();
+                cellsRowAlumne.add(writeCell(String.valueOf(i++)));
+                cellsRowAlumne.add(writeCell(alumne.getGestibCognom1()));
+                cellsRowAlumne.add(writeCell(alumne.getGestibCognom2()));
+                cellsRowAlumne.add(writeCell(alumne.getGestibNom()));
+                cellsRowAlumne.add(writeCell(alumne.getGsuiteEmail()));
+                cellsRowAlumne.add(writeCell(String.join(", ",resultPendents)));
 
                 RowData rowAlumne = new RowData();
                 rowAlumne.setValues(cellsRowAlumne);

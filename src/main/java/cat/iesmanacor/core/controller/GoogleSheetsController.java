@@ -72,6 +72,24 @@ public class GoogleSheetsController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
+    @PostMapping("/google/sheets/alumnatpergruppendents")
+    public ResponseEntity<Notificacio> alumnatPerGrupPendents(@RequestBody List<GrupDto> grups, HttpServletRequest request) throws GeneralSecurityException, IOException {
+        Claims claims = tokenManager.getClaims(request);
+        String myEmail = (String) claims.get("email");
+
+        UsuariDto myUser = usuariService.findByEmail(myEmail);
+
+        Spreadsheet spreadsheet = googleSpreadsheetService.alumnesGrupPendents(grups, myUser.getGsuiteEmail());
+
+        llistatGoogleService.save(spreadsheet.getSpreadsheetId(), spreadsheet.getProperties().getTitle(), spreadsheet.getSpreadsheetUrl(), LlistatGoogleTipusDto.ALUMNES_PER_GRUP, myUser);
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Llistat desat amb èxit");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
     @PostMapping("/google/sheets/usuarisgrupcorreu")
     public ResponseEntity usuarisPerGrupCorreu(@RequestBody List<GrupCorreuDto> grupsCoreu, HttpServletRequest request) throws GeneralSecurityException, IOException {
         Claims claims = tokenManager.getClaims(request);
