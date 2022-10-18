@@ -28,6 +28,17 @@ public class SessioController {
     private SessioService sessioService;
 
 
+    @GetMapping("/public/sessio/llistat")
+    public ResponseEntity<List<SessioDto>> getSessions() {
+        List<SessioDto> sessions = sessioService.findAll();
+        return new ResponseEntity<>(sessions, HttpStatus.OK);
+    }
+
+    @GetMapping("/public/sessio/{idgrup}")
+    public ResponseEntity<List<SessioDto>> getSessionsByGrup(@PathVariable("idgrup") Long idgrup) {
+        List<SessioDto> sessions = sessioService.findByGrup(idgrup);
+        return new ResponseEntity<>(sessions, HttpStatus.OK);
+    }
 
     @GetMapping("/sessio/pares")
     public ResponseEntity<List<SessioDto>> getSessionsAtencioPares() {

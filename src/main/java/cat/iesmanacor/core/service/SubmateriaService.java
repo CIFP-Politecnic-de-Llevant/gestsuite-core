@@ -1,5 +1,6 @@
 package cat.iesmanacor.core.service;
 
+import cat.iesmanacor.core.dto.gestib.CursDto;
 import cat.iesmanacor.core.dto.gestib.SubmateriaDto;
 import cat.iesmanacor.core.model.gestib.Submateria;
 import cat.iesmanacor.core.repository.gestib.SubmateriaRepository;
@@ -7,6 +8,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SubmateriaService {
@@ -39,6 +43,11 @@ public class SubmateriaService {
     public void deleteAllSubmateries() {
         submateriaRepository.deleteAllInBatch();
         submateriaRepository.deleteAll();
+    }
+
+    public List<SubmateriaDto> findAll(){
+        ModelMapper modelMapper = new ModelMapper();
+        return submateriaRepository.findAll().stream().map(s->modelMapper.map(s,SubmateriaDto.class)).collect(Collectors.toList());
     }
 
 }

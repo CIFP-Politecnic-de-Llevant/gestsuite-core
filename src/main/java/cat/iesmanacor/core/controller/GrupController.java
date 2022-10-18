@@ -31,7 +31,7 @@ public class GrupController {
     @Autowired
     private UsuariService usuariService;
 
-    @GetMapping("/grup/llistat")
+    @GetMapping({"/grup/llistat","/public/grup/llistat"})
     public ResponseEntity<List<GrupDto>> getGrups() {
         List<GrupDto> grups = grupService.findAll().stream().filter(GrupDto::getActiu).collect(Collectors.toList());
         return new ResponseEntity<>(grups, HttpStatus.OK);

@@ -56,7 +56,7 @@ public class CursController {
         return new ResponseEntity<>(curs, HttpStatus.OK);
     }
 
-    @GetMapping("/curs/llistat")
+    @GetMapping({"/curs/llistat","/public/curs/llistat"})
     public ResponseEntity<List<CursDto>> getCursos() {
         List<CursDto> cursos = cursService.findAll().stream().filter(c->c.getActiu()).collect(Collectors.toList());
         return new ResponseEntity<>(cursos, HttpStatus.OK);

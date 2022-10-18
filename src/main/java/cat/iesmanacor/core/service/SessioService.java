@@ -3,8 +3,10 @@ package cat.iesmanacor.core.service;
 import cat.iesmanacor.core.dto.gestib.SessioDto;
 import cat.iesmanacor.core.dto.gestib.UsuariDto;
 import cat.iesmanacor.core.model.gestib.Activitat;
+import cat.iesmanacor.core.model.gestib.Grup;
 import cat.iesmanacor.core.model.gestib.Sessio;
 import cat.iesmanacor.core.repository.gestib.ActivitatRepository;
+import cat.iesmanacor.core.repository.gestib.GrupRepository;
 import cat.iesmanacor.core.repository.gestib.SessioRepository;
 import org.bouncycastle.math.raw.Mod;
 import org.modelmapper.ModelMapper;
@@ -23,6 +25,9 @@ public class SessioService {
 
     @Autowired
     private ActivitatRepository activitatRepository;
+
+    @Autowired
+    private GrupRepository grupRepository;
 
     /*
     <SESSIO
@@ -97,6 +102,24 @@ public class SessioService {
         }
         System.out.println("Num sessions"+result.size()+"idactivitat pares"+activitatsPares.size());
         return result.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
+    }
+
+    public List<SessioDto> findAll(){
+        ModelMapper modelMapper = new ModelMapper();
+        List<Sessio> sessions = sessioRepository.findAll();
+        return sessions.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
+    }
+
+    public List<SessioDto> findByGrup(Long idGrup){
+        ModelMapper modelMapper = new ModelMapper();
+
+        Grup grup = grupRepository.findById(idGrup).orElse(null);
+
+        if(grup!=null) {
+            List<Sessio> sessions = sessioRepository.findAll().stream().filter(s -> s.getGestibGrup().equals(grup.getGestibIdentificador())).collect(Collectors.toList());
+            return sessions.stream().map(s -> modelMapper.map(s, SessioDto.class)).collect(Collectors.toList());
+        }
+        return null;
     }
 }
 
