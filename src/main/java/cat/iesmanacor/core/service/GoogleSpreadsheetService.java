@@ -451,13 +451,17 @@ public class GoogleSpreadsheetService {
         List<Sheet> sheets = new ArrayList<>();
 
         for (GrupCorreuDto g : grupsCorreu) {
-            List<UsuariDto> usuaris = new ArrayList<>(g.getUsuaris());
+            //List<UsuariDto> usuaris = new ArrayList<>(g.getUsuaris());
+
+            List<UsuariDto> usuaris = this.getUsuarisByGrupCorreu(g);
+
             usuaris.sort((a1, a2) -> {
                 String str1 = a1.getGestibCognom1() + " " + a1.getGestibCognom2() + ", " + a1.getGestibNom();
                 String str2 = a2.getGestibCognom1() + " " + a2.getGestibCognom2() + ", " + a2.getGestibNom();
 
                 return str1.compareTo(str2);
             });
+
             Sheet s = new Sheet();
 
             //Propietats de la pàgina
@@ -1056,6 +1060,17 @@ public class GoogleSpreadsheetService {
             cellData.setTextFormatRuns(textFormatRuns);
         }
         return cellData;
+    }
+
+    private List<UsuariDto> getUsuarisByGrupCorreu(GrupCorreuDto grupCorreu) {
+        List<UsuariDto> usuaris = new ArrayList<>(grupCorreu.getUsuaris());
+
+        for(GrupCorreuDto g: grupCorreu.getGrupCorreus()){
+            usuaris.addAll(this.getUsuarisByGrupCorreu(g));
+        }
+
+        //usuaris únics
+        return usuaris.stream().distinct().collect(Collectors.toList());
     }
 }
 
