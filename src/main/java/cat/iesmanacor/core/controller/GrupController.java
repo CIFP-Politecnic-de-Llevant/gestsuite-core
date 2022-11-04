@@ -44,4 +44,16 @@ public class GrupController {
         return new ResponseEntity<>(grups, HttpStatus.OK);
     }
 
+    @GetMapping("grup/getById/{idgrup}")
+    public ResponseEntity<GrupDto> getById(@PathVariable("idgrup") Long idgrup){
+        GrupDto grup = grupService.findById(idgrup);
+        return new ResponseEntity<>(grup, HttpStatus.OK);
+    }
+
+    @GetMapping("grup/getByGestibIdentificador/{idgrup}")
+    public ResponseEntity<GrupDto> getByGestibIdentificador(@PathVariable("idgrup") String idgrup){
+        GrupDto grup = grupService.findByGestibIdentificador(idgrup);
+        return new ResponseEntity<>(grup, HttpStatus.OK);
+    }
+
 }

@@ -42,6 +42,15 @@ public class GrupService {
         return modelMapper.map(grupSaved,GrupDto.class);
     }
 
+    public GrupDto findById(Long id) {
+        ModelMapper modelMapper = new ModelMapper();
+        Grup grup = grupRepository.findById(id).orElse(null);
+        if(grup!=null) {
+            return modelMapper.map(grup, GrupDto.class);
+        }
+        return null;
+    }
+
     public GrupDto findByGestibIdentificador(String identificador) {
         ModelMapper modelMapper = new ModelMapper();
         Grup grup = grupRepository.findGrupByGestibIdentificador(identificador);
