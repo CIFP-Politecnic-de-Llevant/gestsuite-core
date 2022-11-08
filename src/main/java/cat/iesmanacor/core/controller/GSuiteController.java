@@ -9,12 +9,14 @@ import cat.iesmanacor.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.User;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -199,6 +201,16 @@ public class GSuiteController {
         log.info("Normalització d'usuaris finalitzat correctament");
 
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/gsuite/sendemail")
+    public void sendEmail(@RequestBody String json) throws IOException, MessagingException, GeneralSecurityException {
+        JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+
+        String assumpte = jsonObject.get("assumpte").getAsString();
+        String missatge = jsonObject.get("missatge").getAsString();
+        String to = jsonObject.get("to").getAsString();
+        gMailService.sendMessage(assumpte,missatge,to);
     }
 
     @PostMapping(value="/gsuite/sendemailattachment")

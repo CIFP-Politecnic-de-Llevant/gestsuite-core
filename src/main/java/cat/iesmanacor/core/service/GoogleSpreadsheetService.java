@@ -114,7 +114,7 @@ public class GoogleSpreadsheetService {
         System.out.printf("%d cells updated.", result.getUpdatedCells());
     }
 
-    public List<List<String>> getSpreadsheetDataTable(String id, String myEmail) throws IOException, GeneralSecurityException, MessagingException {
+    public List<List<String>> getSpreadsheetDataTable(String id, String myEmail) throws IOException, GeneralSecurityException {
         String[] scopes = {SheetsScopes.SPREADSHEETS};
 
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(myEmail);

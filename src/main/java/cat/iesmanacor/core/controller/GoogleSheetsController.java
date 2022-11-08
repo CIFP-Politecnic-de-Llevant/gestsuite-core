@@ -14,6 +14,7 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -203,6 +205,16 @@ public class GoogleSheetsController {
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
 
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/google/sheets/getSpreadsheetDataTable")
+    public List<List<String>> getSpreadsheetDataTable(@RequestBody String idSheet, HttpServletRequest request) throws GeneralSecurityException, IOException {
+        Claims claims = tokenManager.getClaims(request);
+        String myEmail = (String) claims.get("email");
+
+        UsuariDto myUser = usuariService.findByEmail(myEmail);
+
+        return googleSpreadsheetService.getSpreadsheetDataTable(idSheet, myEmail);
     }
 
 }
