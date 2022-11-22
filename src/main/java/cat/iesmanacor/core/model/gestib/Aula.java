@@ -23,5 +23,4 @@ public @Data class Aula {
     //@OneToMany(mappedBy="centre")
     //@JsonManagedReference
     //private Set<Modul> moduls = new HashSet<>();
-
 }
