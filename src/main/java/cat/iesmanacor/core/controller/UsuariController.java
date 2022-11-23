@@ -205,4 +205,16 @@ public class UsuariController {
 
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
+
+    @GetMapping("/public/usuaris/profile/{id}")
+    public ResponseEntity<UsuariDto> getPublicProfile(@PathVariable("id") String idUsuari) throws Exception {
+        UsuariDto usuari = usuariService.findById(Long.valueOf(idUsuari));
+
+        //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        if (usuari != null && usuari.getGestibProfessor() != null && usuari.getGestibProfessor()) {
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
+        } else {
+            throw new Exception("Sense permisos");
+        }
+    }
 }
