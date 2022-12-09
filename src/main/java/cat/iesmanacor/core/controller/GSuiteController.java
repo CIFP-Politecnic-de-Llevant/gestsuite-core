@@ -2,6 +2,7 @@ package cat.iesmanacor.core.controller;
 
 import cat.iesmanacor.common.model.Notificacio;
 import cat.iesmanacor.common.model.NotificacioTipus;
+import cat.iesmanacor.common.service.UtilService;
 import cat.iesmanacor.core.dto.gestib.CursDto;
 import cat.iesmanacor.core.dto.gestib.GrupDto;
 import cat.iesmanacor.core.dto.gestib.UsuariDto;
