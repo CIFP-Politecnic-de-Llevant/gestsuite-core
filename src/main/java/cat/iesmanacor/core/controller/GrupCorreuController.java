@@ -262,10 +262,16 @@ public class GrupCorreuController {
         List<GrupDto> grups = new ArrayList<>();
         if(jsonGrups!=null) {
             for (JsonElement jsonGrup : jsonGrups) {
-                String gestibIdGrup = jsonGrup.getAsJsonObject().get("value").getAsString();
-                GrupDto grup = grupService.findByGestibIdentificador(gestibIdGrup);
-                if (grup != null) {
-                    grups.add(grup);
+                if(
+                        jsonGrup!=null && !jsonGrup.isJsonNull() &&
+                        jsonGrup.getAsJsonObject()!=null && !jsonGrup.getAsJsonObject().isJsonNull() &&
+                        jsonGrup.getAsJsonObject().get("value") != null && !jsonGrup.getAsJsonObject().get("value").isJsonNull()
+                ) {
+                    String gestibIdGrup = jsonGrup.getAsJsonObject().get("value").getAsString();
+                    GrupDto grup = grupService.findByGestibIdentificador(gestibIdGrup);
+                    if (grup != null) {
+                        grups.add(grup);
+                    }
                 }
             }
         }
