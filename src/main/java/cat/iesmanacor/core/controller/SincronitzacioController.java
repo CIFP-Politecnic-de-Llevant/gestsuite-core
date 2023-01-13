@@ -7,6 +7,7 @@ import cat.iesmanacor.core.dto.gestib.*;
 import cat.iesmanacor.core.dto.google.GrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
 import cat.iesmanacor.core.model.gestib.Centre;
+import cat.iesmanacor.core.model.gestib.Usuari;
 import cat.iesmanacor.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.Group;
@@ -79,6 +80,9 @@ public class SincronitzacioController {
 
     @Autowired
     private GMailService gMailService;
+
+    @Autowired
+    private ObservacioService observacioService;
 
     @Autowired
     private CalendariService calendariService;
@@ -1262,22 +1266,39 @@ public class SincronitzacioController {
                     usuarisUpdate.add(u);
                 }
 
-                u.setGsuiteEmail(email);
-                u.setGsuiteAdministrador(isAdmin);
-                u.setGsuitePersonalID(personalIdKey);
-                u.setGsuiteSuspes(isSuspes);
-                u.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
-                u.setGsuiteGivenName(givenName);
-                u.setGsuiteFamilyName(familyName);
-                u.setGsuiteFullName(fullName);
+                //Pot passar que el personalIdKey no coincideixi, per què?
+                //Idò pot passar que hagin ESBORRAT l'usuari a GSuite, aleshores el programa en fa un de nou
+                //I clar, a la BBDD no coincideix, solució? Si no coincideix el personal ID key, passa a eliminat amb una observació.
+                if((u.getGsuiteEmail() !=null && !u.getGsuiteEmail().equals(email)) || (u.getGsuitePersonalID()!=null && !u.getGsuitePersonalID().equals(personalIdKey))){
+                    String descripció = "Correu antic: " + u.getGsuiteEmail()+". Personal ID antic: "+u.getGsuitePersonalID();
 
-                //Si és algú del PAS ho podem conèixer perquè no tindrà pesonalIDKey, aleshores ha d'estar actiu però
-                //no tindrà usuari Gestib.
-                if (personalIdKey == null || personalIdKey.isEmpty()) {
-                    u.setActiu(true);
+                    u.setGsuiteEmail(null);
+                    u.setGsuitePersonalID(null);
+                    u.setGsuiteEliminat(true);
+
+                    UsuariDto usuariDto = usuariService.save(u);
+
+                    //Creem una observació
+                    observacioService.save(descripció,ObservacioTipusDto.ESBORRAT,usuariDto);
+                } else {
+
+                    u.setGsuiteEmail(email);
+                    u.setGsuiteAdministrador(isAdmin);
+                    u.setGsuitePersonalID(personalIdKey);
+                    u.setGsuiteSuspes(isSuspes);
+                    u.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
+                    u.setGsuiteGivenName(givenName);
+                    u.setGsuiteFamilyName(familyName);
+                    u.setGsuiteFullName(fullName);
+
+                    //Si és algú del PAS ho podem conèixer perquè no tindrà pesonalIDKey, aleshores ha d'estar actiu però
+                    //no tindrà usuari Gestib.
+                    if (personalIdKey == null || personalIdKey.isEmpty()) {
+                        u.setActiu(true);
+                    }
+
+                    usuariService.save(u);
                 }
-
-                usuariService.save(u);
             } else {
                 log.info("L'usuari no existeix. Creant usuari " + email + " amb clau " + personalIdKey);
                 boolean actiu = personalIdKey == null || personalIdKey.isEmpty();
