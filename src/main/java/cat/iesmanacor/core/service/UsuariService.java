@@ -174,8 +174,16 @@ public class UsuariService {
     }
 
     public List<UsuariDto> findAll() {
+        return this.findAll(false);
+    }
+
+    public List<UsuariDto> findAll(boolean inclouSuspesos) {
         ModelMapper modelMapper = new ModelMapper();
-        return usuariRepository.findAll().stream().filter(u->u.getGsuiteSuspes()==null || !u.getGsuiteSuspes()).map(u->modelMapper.map(u,UsuariDto.class)).collect(Collectors.toList());
+        if(inclouSuspesos){
+            return usuariRepository.findAll().stream().map(u -> modelMapper.map(u, UsuariDto.class)).collect(Collectors.toList());
+        } else {
+            return usuariRepository.findAll().stream().filter(u -> u.getGsuiteSuspes() == null || !u.getGsuiteSuspes()).map(u -> modelMapper.map(u, UsuariDto.class)).collect(Collectors.toList());
+        }
     }
 
     public List<UsuariDto> findProfessors() {
