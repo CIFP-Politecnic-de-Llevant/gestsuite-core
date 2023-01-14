@@ -1284,50 +1284,6 @@ public class SincronitzacioController {
             }
         }
 
-        /*for (User gsuiteUser : gsuiteUsers) {
-
-            String email = gsuiteUser.getPrimaryEmail();
-            String personalIdKey = "";
-
-            try {
-                List personalIDValueOrganization = (ArrayList) gsuiteUser.getExternalIds();
-                ArrayMap userKey = (ArrayMap) personalIDValueOrganization.get(0);
-
-                String valueKey = userKey.getKey(0).toString();
-                String valueValue = userKey.getValue(0).toString();
-
-                String organizationKey = userKey.getKey(1).toString();
-                String organizationValue = userKey.getValue(1).toString();
-
-
-                //System.out.println(valueKey + "<<->>" + valueValue + "<<->>" + organizationKey + "<<->>" + organizationValue+ "<<->>");
-
-                if (valueKey.equals("value") && organizationKey.equals("type") && organizationValue.equals("organization")) {
-                    personalIdKey = valueValue;
-                }
-            } catch (Exception e) {
-            }
-
-
-            UsuariDto u = usuariService.findByGestibCodiOrEmail(personalIdKey, email);
-            log.info("Personal Key:" + personalIdKey + "E-mail:" + email);
-
-            if (u != null && (u.getGsuiteEmail() != null && !u.getGsuiteEmail().equals(email)) || (u.getGsuitePersonalID() != null && !u.getGsuitePersonalID().equals(personalIdKey))) {
-
-                String descripcio = "L'usuari de l'aplicació no coincideix amb el de GSuite. Es procedeix a donar esborrar-lo. Correu antic: " + u.getGsuiteEmail() + ". Personal ID antic: " + u.getGsuitePersonalID();
-                System.out.println(descripcio);
-
-                //u.setGsuiteEmail(null);
-                //u.setGsuitePersonalID(null);
-                u.setGsuiteEliminat(true);
-
-                UsuariDto usuariDto = usuariService.save(u);
-
-                //Creem una observació
-                observacioService.save(descripcio, ObservacioTipusDto.ESBORRAT, usuariDto);
-            }
-        }*/
-
 
         //Actualitzem els usuaris de la BBDD
         for (User gsuiteUser : gsuiteUsers) {
