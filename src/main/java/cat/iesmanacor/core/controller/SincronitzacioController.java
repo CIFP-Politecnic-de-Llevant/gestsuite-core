@@ -1371,7 +1371,10 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisSenseCorreu = usuariService.findUsuarisSenseCorreu();
         for (UsuariDto usuari : usuarisSenseCorreu) {
             //Comprovam si està actiu pels usuaris eliminats, no hem de crear el de tothom
-            if (centre.getSincronitzaProfessors() && usuari.getGestibProfessor() && usuari.getActiu() && usuari.getGsuiteEmail() == null) {
+            if (centre.getSincronitzaProfessors()!=null && centre.getSincronitzaProfessors() &&
+                    usuari.getGestibProfessor() != null &&  usuari.getGestibProfessor() &&
+                    usuari.getActiu() != null && usuari.getActiu() &&
+                    usuari.getGsuiteEmail() == null) {
                 String username = this.generateUsername(usuari, this.formatEmailProfessors);
 
                 log.info("Username: " + username);
@@ -1407,7 +1410,10 @@ public class SincronitzacioController {
                     String missatge = "Error creant el correu del professor " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
                     log.error(missatge);
                 }
-            } else if (centre.getSincronitzaAlumnes() && usuari.getGestibAlumne() && usuari.getActiu() && usuari.getGsuiteEmail() == null) {
+            } else if (centre.getSincronitzaAlumnes()!=null && centre.getSincronitzaAlumnes() &&
+                    usuari.getGestibAlumne() !=null && usuari.getGestibAlumne() &&
+                    usuari.getActiu() !=null && usuari.getActiu() &&
+                    usuari.getGsuiteEmail() == null) {
                 //Username
                 String username = this.generateUsername(usuari, this.formatEmailAlumnes);
 
