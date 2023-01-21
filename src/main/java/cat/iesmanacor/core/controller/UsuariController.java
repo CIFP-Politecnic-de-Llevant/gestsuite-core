@@ -107,6 +107,23 @@ public class UsuariController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
+    @PostMapping("/usuaris/reactivar")
+    public ResponseEntity<Notificacio> reactivarUsuaris(@RequestBody List<UsuariDto> usuaris) throws GeneralSecurityException, IOException, InterruptedException {
+
+        for (UsuariDto usuari : usuaris) {
+            gSuiteService.suspendreUser(usuari.getGsuiteEmail(), false);
+
+            //Reactiva a la BBDD
+            usuariService.reactivaUsuari(usuari);
+        }
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Usuaris suspesos correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
     @GetMapping({"/usuaris/profile/rol", "/auth/profile/rol"})
     public ResponseEntity<Set<RolDto>> getRolsUsuari(HttpServletRequest request) {
         Claims claims = tokenManager.getClaims(request);

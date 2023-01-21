@@ -253,5 +253,14 @@ public class UsuariService {
         Usuari u = modelMapper.map(usuari,Usuari.class);
         usuariRepository.save(u);
     }
+
+    @Transactional
+    public void reactivaUsuari(UsuariDto usuari) {
+        usuari.setGsuiteSuspes(false);
+
+        ModelMapper modelMapper = new ModelMapper();
+        Usuari u = modelMapper.map(usuari,Usuari.class);
+        usuariRepository.save(u);
+    }
 }
 

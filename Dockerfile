@@ -2,6 +2,9 @@ FROM maven:amazoncorretto
 #FROM openjdk:11-jdk-slim
 
 WORKDIR /resources
+
+COPY /Users/joangalmesriera/Library/Mobile Documents/com~apple~CloudDocs/Joan/keys/iesmanacor/iesmanacor-e0d4f26d9c2c.json /certs/
+
 COPY ../gestsuite-common/target/common-0.0.1-SNAPSHOT.jar .
 COPY ../gestsuite-common/pom.xml .
 RUN mvn install:install-file -Dfile=/resources/common-0.0.1-SNAPSHOT.jar -DpomFile=/resources/pom.xml
