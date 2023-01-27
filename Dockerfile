@@ -3,7 +3,7 @@ FROM maven:amazoncorretto
 
 WORKDIR /resources
 
-COPY /documentacio/iesmanacor-e0d4f26d9c2c.json .
+#COPY /documentacio/iesmanacor-e0d4f26d9c2c.json .
 
 COPY /api/gestsuite-common/target/common-0.0.1-SNAPSHOT.jar .
 COPY /api/gestsuite-common/pom.xml .
