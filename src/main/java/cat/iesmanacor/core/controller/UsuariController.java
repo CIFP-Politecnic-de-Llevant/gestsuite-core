@@ -108,8 +108,7 @@ public class UsuariController {
     }
 
     @PostMapping("/usuaris/reactivar")
-    public ResponseEntity<Notificacio> reactivarUsuaris(@RequestBody List<UsuariDto> usuaris) throws GeneralSecurityException, IOException, InterruptedException {
-
+    public ResponseEntity<Notificacio> reactivarUsuaris(@RequestBody List<UsuariDto> usuaris) throws InterruptedException {
         for (UsuariDto usuari : usuaris) {
             gSuiteService.suspendreUser(usuari.getGsuiteEmail(), false);
 
