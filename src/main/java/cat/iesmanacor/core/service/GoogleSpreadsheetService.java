@@ -10,6 +10,7 @@ import cat.iesmanacor.core.model.google.GrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreuTipus;
 import cat.iesmanacor.core.repository.gestib.*;
 import cat.iesmanacor.core.repository.google.GrupCorreuRepository;
+import cat.iesmanacor.core.repository.google.UsuariGrupCorreuRepository;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -60,6 +61,9 @@ public class GoogleSpreadsheetService {
 
     @Autowired
     private GrupCorreuRepository grupCorreuRepository;
+
+    @Autowired
+    private UsuariGrupCorreuRepository usuariGrupCorreuRepository;
 
     @Autowired
     private GrupRepository grupRepository;
@@ -906,7 +910,10 @@ public class GoogleSpreadsheetService {
 
             Usuari usuari = modelMapper.map(usuariDto,Usuari.class);
 
-            List<GrupCorreu> grupsCorreuUsuari = grupCorreuRepository.findAllByUsuarisContains(usuari);
+            List<UsuariGrupCorreu> usuariGrupCorreus = usuariGrupCorreuRepository.findAllByUsuari(usuari);
+
+            List<GrupCorreu> grupsCorreuUsuari = usuariGrupCorreus.stream().map(UsuariGrupCorreu::getGrupCorreu).collect(Collectors.toList());
+            //List<GrupCorreu> grupsCorreuUsuari = grupCorreuRepository.findAllByUsuarisContains(usuari);
 
             String grupsCorreu = grupsCorreuUsuari.stream().map(grup->grup.getGsuiteNom() + " ("+ grup.getGsuiteEmail()+")").collect(Collectors.joining(", "));
 
@@ -1063,7 +1070,7 @@ public class GoogleSpreadsheetService {
     }
 
     private List<UsuariDto> getUsuarisByGrupCorreu(GrupCorreuDto grupCorreu) {
-        List<UsuariDto> usuaris = new ArrayList<>(grupCorreu.getUsuaris());
+        List<UsuariDto> usuaris = new ArrayList<>(grupCorreu.getUsuarisGrupCorreu().stream().map(ug->ug.getUsuari()).collect(Collectors.toList()));
 
         for(GrupCorreuDto g: grupCorreu.getGrupCorreus()){
             usuaris.addAll(this.getUsuarisByGrupCorreu(g));

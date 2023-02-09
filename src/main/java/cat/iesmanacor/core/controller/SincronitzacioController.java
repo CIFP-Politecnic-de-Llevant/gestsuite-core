@@ -1680,7 +1680,8 @@ public class SincronitzacioController {
 
             //Esborrem els usuaris del grup de correu
             grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreu);
-            grupCorreu.setUsuaris(new HashSet<>());
+            //grupCorreu.setUsuaris(new HashSet<>());
+            grupCorreu.setUsuarisGrupCorreu(new HashSet<>());
 
             //Esborrem els grups de correu del grup de correu
             grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreu);
@@ -1692,8 +1693,14 @@ public class SincronitzacioController {
                 UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 GrupCorreuDto grupCorreuMember = grupCorreuService.findByEmail(member.getEmail());
                 if (usuari != null) {
-                    grupCorreuService.insertUsuari(grupCorreu, usuari);
-                    grupCorreu.getUsuaris().add(usuari);
+                    grupCorreuService.insertUsuari(grupCorreu, usuari, false);
+                    //grupCorreu.getUsuaris().add(usuari);
+                    UsuariGrupCorreuDto ugc = new UsuariGrupCorreuDto();
+                    ugc.setGrupCorreu(grupCorreu);
+                    ugc.setUsuari(usuari);
+                    ugc.setBloquejat(false);
+
+                    grupCorreu.getUsuarisGrupCorreu().add(ugc);
                 }
                 if (grupCorreuMember != null) {
                     grupCorreuService.insertGrupCorreu(grupCorreu, grupCorreuMember);

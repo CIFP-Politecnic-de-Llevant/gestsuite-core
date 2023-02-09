@@ -7,14 +7,17 @@ import cat.iesmanacor.core.dto.google.GrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
 import cat.iesmanacor.core.model.gestib.Grup;
 import cat.iesmanacor.core.model.gestib.Usuari;
+import cat.iesmanacor.core.model.gestib.UsuariGrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreuTipus;
 import cat.iesmanacor.core.repository.google.GrupCorreuRepository;
+import cat.iesmanacor.core.repository.google.UsuariGrupCorreuRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +27,9 @@ import java.util.stream.Collectors;
 public class GrupCorreuService {
     @Autowired
     private GrupCorreuRepository grupCorreuRepository;
+
+    @Autowired
+    private UsuariGrupCorreuRepository usuariGrupCorreuRepository;
 
     @Transactional
     public GrupCorreuDto save(GrupCorreuDto gc) {
@@ -85,7 +91,7 @@ public class GrupCorreuService {
         return grupCorreuRepository
                 .findAll()
                 .stream()
-                .filter(gc -> gc.getUsuaris().stream().anyMatch(u -> u.getIdusuari().equals(usuari.getIdusuari())))
+                .filter(gc -> gc.getUsuarisGrupsCorreu().stream().anyMatch(u -> u.getUsuari().getIdusuari().equals(usuari.getIdusuari())))
                 .map(gc->modelMapper.map(gc,GrupCorreuDto.class))
                 .collect(Collectors.toList());
     }
@@ -103,27 +109,38 @@ public class GrupCorreuService {
 
 
     @Transactional
-    public void insertUsuari(GrupCorreuDto grupCorreu, UsuariDto usuariDto) {
+    public void insertUsuari(GrupCorreuDto grupCorreuDto, UsuariDto usuariDto, boolean bloquejat) {
         ModelMapper modelMapper = new ModelMapper();
         Usuari usuari = modelMapper.map(usuariDto,Usuari.class);
-        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getUsuaris().add(usuari);
+
+        GrupCorreu grupCorreu = modelMapper.map(grupCorreuDto,GrupCorreu.class);
+
+        UsuariGrupCorreu usuariGrupCorreu = new UsuariGrupCorreu();
+        usuariGrupCorreu.setGrupCorreu(grupCorreu);
+        usuariGrupCorreu.setUsuari(usuari);
+        usuariGrupCorreu.setBloquejat(bloquejat);
+
+        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getUsuarisGrupsCorreu().add(usuariGrupCorreu);
     }
 
     @Transactional
-    public void esborrarUsuari(GrupCorreuDto grupCorreu, UsuariDto usuariDto) {
+    public void esborrarUsuari(GrupCorreuDto grupCorreDto, UsuariDto usuariDto) {
         ModelMapper modelMapper = new ModelMapper();
         Usuari usuari = modelMapper.map(usuariDto,Usuari.class);
-        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getUsuaris().remove(usuari);
+
+        List<UsuariGrupCorreu> usuarisGrupCorreus = grupCorreuRepository.findById(grupCorreDto.getIdgrup()).get().getUsuarisGrupsCorreu()
+                .stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ug.getGrupCorreu().getIdgrup().equals(grupCorreDto.getIdgrup()))
+                .collect(Collectors.toList());
+        usuariGrupCorreuRepository.deleteAll(usuarisGrupCorreus);
     }
 
     @Transactional
     public void esborrarUsuarisGrupCorreu(GrupCorreuDto grupCorreuDto) {
-        Set<Usuari> usuaris = new HashSet<>(grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getUsuaris());
-        for (Usuari usuari : usuaris) {
-            grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getUsuaris().remove(usuari);
-        }
+        List<UsuariGrupCorreu> usuarisGrupCorreus = grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getUsuarisGrupsCorreu()
+                .stream().filter(ug->ug.getGrupCorreu().getIdgrup().equals(grupCorreuDto.getIdgrup()))
+                .collect(Collectors.toList());
+        usuariGrupCorreuRepository.deleteAll(usuarisGrupCorreus);
     }
-
 
 
 
@@ -141,9 +158,6 @@ public class GrupCorreuService {
             grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getGrups().remove(grup);
         }
     }
-
-
-
 
 
     @Transactional

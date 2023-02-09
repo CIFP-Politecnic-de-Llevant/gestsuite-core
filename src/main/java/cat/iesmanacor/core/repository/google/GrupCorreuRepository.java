@@ -11,5 +11,5 @@ import java.util.List;
 public interface GrupCorreuRepository extends JpaRepository<GrupCorreu, Long> {
     GrupCorreu findGrupCorreuByGsuiteEmail(String email);
 
-    List<GrupCorreu> findAllByUsuarisContains(Usuari usuari);
+    //List<GrupCorreu> findAllByUsuarisContains(Usuari usuari);
 }

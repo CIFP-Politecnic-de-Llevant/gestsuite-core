@@ -3,6 +3,8 @@ package cat.iesmanacor.core.model.google;
 import cat.iesmanacor.core.model.gestib.Departament;
 import cat.iesmanacor.core.model.gestib.Grup;
 import cat.iesmanacor.core.model.gestib.Usuari;
+import cat.iesmanacor.core.model.gestib.UsuariGrupCorreu;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
@@ -14,7 +16,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "im_grup_correu")
-@EqualsAndHashCode(exclude={"usuaris","grupCorreus","grups"})
+@EqualsAndHashCode(exclude={"usuarisGrupsCorreu","grupCorreus","grups"})
 public @Data class GrupCorreu {
     @Id
     @Column(name = "idgrup")
@@ -41,12 +43,12 @@ public @Data class GrupCorreu {
     private String gsuiteDescripcio;
 
 
-    /*@OneToMany(mappedBy="grupCorreu")
+    @OneToMany(mappedBy="grupCorreu", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Set<Usuari> usuaris = new HashSet<>();*/
+    private Set<UsuariGrupCorreu> usuarisGrupsCorreu = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Set<Usuari> usuaris = new HashSet<>();
+    /*@ManyToMany(fetch = FetchType.EAGER)
+    private Set<Usuari> usuaris = new HashSet<>();*/
 
     //Un grup de correu pot tenir com a membres altres grups de correu
     @ManyToMany(fetch = FetchType.EAGER)
