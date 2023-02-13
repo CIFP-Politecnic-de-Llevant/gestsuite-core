@@ -3,6 +3,7 @@ package cat.iesmanacor.core.service;
 import cat.iesmanacor.core.dto.gestib.DepartamentDto;
 import cat.iesmanacor.core.dto.gestib.GrupDto;
 import cat.iesmanacor.core.dto.gestib.UsuariDto;
+import cat.iesmanacor.core.dto.gestib.UsuariGrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
 import cat.iesmanacor.core.model.gestib.Grup;
@@ -10,8 +11,10 @@ import cat.iesmanacor.core.model.gestib.Usuari;
 import cat.iesmanacor.core.model.gestib.UsuariGrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreu;
 import cat.iesmanacor.core.model.google.GrupCorreuTipus;
+import cat.iesmanacor.core.repository.gestib.UsuariRepository;
 import cat.iesmanacor.core.repository.google.GrupCorreuRepository;
 import cat.iesmanacor.core.repository.google.UsuariGrupCorreuRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,10 +26,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class GrupCorreuService {
     @Autowired
     private GrupCorreuRepository grupCorreuRepository;
+
+    @Autowired
+    private UsuariRepository usuariRepository;
 
     @Autowired
     private UsuariGrupCorreuRepository usuariGrupCorreuRepository;
@@ -35,6 +42,8 @@ public class GrupCorreuService {
     public GrupCorreuDto save(GrupCorreuDto gc) {
         ModelMapper modelMapper = new ModelMapper();
         GrupCorreu grupCorreu = modelMapper.map(gc, GrupCorreu.class);
+        grupCorreu.getUsuarisGrupsCorreu().forEach(ug->ug.setBloquejat(true));
+        usuariGrupCorreuRepository.saveAll(grupCorreu.getUsuarisGrupsCorreu());
         GrupCorreu grupCorreuSaved = grupCorreuRepository.save(grupCorreu);
         return modelMapper.map(grupCorreuSaved,GrupCorreuDto.class);
     }
@@ -108,19 +117,28 @@ public class GrupCorreuService {
 
 
 
-    @Transactional
-    public void insertUsuari(GrupCorreuDto grupCorreuDto, UsuariDto usuariDto, boolean bloquejat) {
+   @Transactional
+    public UsuariGrupCorreuDto insertUsuari(GrupCorreuDto grupCorreuDto, UsuariDto usuariDto, boolean bloquejat) {
         ModelMapper modelMapper = new ModelMapper();
-        Usuari usuari = modelMapper.map(usuariDto,Usuari.class);
 
-        GrupCorreu grupCorreu = modelMapper.map(grupCorreuDto,GrupCorreu.class);
+       Usuari usuari = usuariRepository.findById(usuariDto.getIdusuari()).orElse(null);
+       GrupCorreu grupCorreu = grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).orElse(null);
 
-        UsuariGrupCorreu usuariGrupCorreu = new UsuariGrupCorreu();
-        usuariGrupCorreu.setGrupCorreu(grupCorreu);
-        usuariGrupCorreu.setUsuari(usuari);
-        usuariGrupCorreu.setBloquejat(bloquejat);
+       UsuariGrupCorreu usuariGrupCorreu = usuariGrupCorreuRepository.findByUsuariAndGrupCorreu(usuari,grupCorreu);
 
-        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getUsuarisGrupsCorreu().add(usuariGrupCorreu);
+       if(usuariGrupCorreu==null){
+           log.info("3333-Usuari null");
+           usuariGrupCorreu = new UsuariGrupCorreu();
+           usuariGrupCorreu.setGrupCorreu(grupCorreu);
+           usuariGrupCorreu.setUsuari(usuari);
+           usuariGrupCorreu.setBloquejat(bloquejat);
+       } else {
+           log.info("444444 usuari no null");
+           usuariGrupCorreu.setBloquejat(bloquejat);
+       }
+
+       UsuariGrupCorreu usuariGrupCorreuSaved = usuariGrupCorreuRepository.save(usuariGrupCorreu);
+       return modelMapper.map(usuariGrupCorreuSaved,UsuariGrupCorreuDto.class);
     }
 
     @Transactional
@@ -135,11 +153,24 @@ public class GrupCorreuService {
     }
 
     @Transactional
-    public void esborrarUsuarisGrupCorreu(GrupCorreuDto grupCorreuDto) {
-        List<UsuariGrupCorreu> usuarisGrupCorreus = grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getUsuarisGrupsCorreu()
+    public List<UsuariGrupCorreuDto> esborrarUsuarisNoBloquejatsGrupCorreu(GrupCorreuDto grupCorreuDto) {
+        ModelMapper modelMapper = new ModelMapper();
+
+        List<UsuariGrupCorreu> usuarisGrupCorreus = grupCorreuRepository
+                .findById(grupCorreuDto.getIdgrup())
+                .get().getUsuarisGrupsCorreu()
                 .stream().filter(ug->ug.getGrupCorreu().getIdgrup().equals(grupCorreuDto.getIdgrup()))
                 .collect(Collectors.toList());
-        usuariGrupCorreuRepository.deleteAll(usuarisGrupCorreus);
+
+        //Esborrem els no bloquejats
+        usuariGrupCorreuRepository.deleteAll(usuarisGrupCorreus.stream().filter(ug->!ug.getBloquejat()).collect(Collectors.toList()));
+
+        //Retornem els bloquejats
+        List<UsuariGrupCorreu> usuariGrupCorreusBloquejats = usuarisGrupCorreus.stream().filter(ug->ug.getBloquejat()).collect(Collectors.toList());
+
+        return usuariGrupCorreusBloquejats.stream()
+                .map(gc->modelMapper.map(gc,UsuariGrupCorreuDto.class))
+                .collect(Collectors.toList());
     }
 
 
@@ -166,6 +197,7 @@ public class GrupCorreuService {
         GrupCorreu membreGrupCorreu = modelMapper.map(membreGrupCorreuDto,GrupCorreu.class);
         grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getGrupCorreus().add(membreGrupCorreu);
     }
+
 
     @Transactional
     public void esborrarGrupsCorreuGrupCorreu(GrupCorreuDto grupCorreu) {

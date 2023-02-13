@@ -8,11 +8,15 @@ import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
 import cat.iesmanacor.core.service.*;
 import com.google.api.services.directory.model.Group;
 import com.google.api.services.directory.model.Member;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MultiMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -22,12 +26,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 public class GrupCorreuController {
 
@@ -54,6 +56,9 @@ public class GrupCorreuController {
 
     @Autowired
     private DepartamentService departamentService;
+
+    @Autowired
+    private UsuariGrupCorreuService usuariGrupCorreuService;
 
     @Autowired
     private TokenManager tokenManager;
@@ -107,9 +112,9 @@ public class GrupCorreuController {
                 grupCorreu = grupCorreuService.save(null, grup.getName(), grup.getEmail(), grup.getDescription(), GrupCorreuTipusDto.GENERAL);
             } else {
                 //Esborrem els usuaris del grup de correu
-                grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreu);
+                List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreu);
                 //grupCorreu.setUsuaris(new HashSet<>());
-                grupCorreu.setUsuarisGrupCorreu(new HashSet<>());
+                grupCorreu.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
 
                 //Esborrem els grups de correu del grup de correu
                 grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreu);
@@ -123,14 +128,11 @@ public class GrupCorreuController {
                 UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 GrupCorreuDto grupCorreuMember = grupCorreuService.findByEmail(member.getEmail());
                 if (usuari != null) {
-                    grupCorreuService.insertUsuari(grupCorreu, usuari,false);
+                    UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, false);
                     //grupCorreu.getUsuaris().add(usuari);
-                    UsuariGrupCorreuDto ugc = new UsuariGrupCorreuDto();
-                    ugc.setGrupCorreu(grupCorreu);
-                    ugc.setUsuari(usuari);
-                    ugc.setBloquejat(false);
 
-                    grupCorreu.getUsuarisGrupCorreu().add(ugc);
+
+                    grupCorreu.getUsuarisGrupCorreu().add(usuariGrupCorreuDto);
                 }
                 if (grupCorreuMember != null) {
                     grupCorreuService.insertGrupCorreu(grupCorreu, grupCorreuMember);
@@ -256,12 +258,14 @@ public class GrupCorreuController {
         }
 
         //USUARIS
-        List<UsuariDto> usuaris = new ArrayList<>();
+        //List<UsuariDto> usuaris = new ArrayList<>();
+        Multimap<UsuariDto, Boolean> usuaris = LinkedHashMultimap.create();
         for(JsonElement jsonUsuari: jsonUsuaris){
             Long idUsuari = jsonUsuari.getAsJsonObject().get("idusuari").getAsLong();
+            Boolean bloquejat = jsonUsuari.getAsJsonObject().get("bloquejat").getAsBoolean();
             UsuariDto usuari = usuariService.findById(idUsuari);
             if(usuari!=null){
-                usuaris.add(usuari);
+                usuaris.put(usuari,bloquejat);
             }
         }
 
@@ -299,9 +303,9 @@ public class GrupCorreuController {
         GrupCorreuDto grupCorreuSaved = grupCorreuService.save(grupCorreu);
 
         //Esborrem els usuaris del grup de correu
-        grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreuSaved);
+        List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreuSaved);
         //grupCorreuSaved.setUsuaris(new HashSet<>());
-        grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>());
+        grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
 
         //Esborrem els grups del grup de correu
         grupCorreuService.esborrarGrupsGrupCorreu(grupCorreuSaved);
@@ -315,15 +319,15 @@ public class GrupCorreuController {
         //Tornem a inserir els usuaris
         List<UsuariGrupCorreuDto> usuariGrupCorreuDtos = new ArrayList<>();
 
-        for (UsuariDto usuari : usuaris) {
-            grupCorreuService.insertUsuari(grupCorreuSaved, usuari,false);
+        for(Map.Entry<UsuariDto,Boolean> usuariBloqueig: usuaris.entries()){
+            UsuariDto usuari = usuariBloqueig.getKey();
+            Boolean bloqueig = usuariBloqueig.getValue();
 
-            UsuariGrupCorreuDto ugc = new UsuariGrupCorreuDto();
-            ugc.setGrupCorreu(grupCorreuSaved);
-            ugc.setUsuari(usuari);
-            ugc.setBloquejat(false);
+            log.info("Usuari desam:"+usuari.getGsuiteEmail()+"bloq"+bloqueig);
 
-            usuariGrupCorreuDtos.add(ugc);
+            UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreuSaved, usuari,bloqueig);
+
+            usuariGrupCorreuDtos.add(usuariGrupCorreuDto);
         }
 
         //grupCorreuSaved.setUsuaris(new HashSet<>(usuaris));
@@ -353,7 +357,7 @@ public class GrupCorreuController {
         }
 
         //Tornem a inserir els usuaris
-        for (UsuariDto usuari : usuaris) {
+        for (UsuariDto usuari : usuaris.keys()) {
             gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail());
         }
 
@@ -488,9 +492,9 @@ public class GrupCorreuController {
         }
 
         //Esborrem els usuaris del grup de correu
-        grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreuSaved);
+        List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreuSaved);
         //grupCorreuSaved.setUsuaris(new HashSet<>());
-        grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>());
+        grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
 
         //Esborrem els grups de correu del grup de correu
         grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreuSaved);
@@ -501,14 +505,9 @@ public class GrupCorreuController {
         List<UsuariGrupCorreuDto> usuarisGrupCorreus= new ArrayList<>();
 
         for (UsuariDto usuari : usuarisGrup) {
-            grupCorreuService.insertUsuari(grupCorreuSaved, usuari,false);
+            UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreuSaved, usuari,false);
 
-            UsuariGrupCorreuDto ugc = new UsuariGrupCorreuDto();
-            ugc.setGrupCorreu(grupCorreuSaved);
-            ugc.setUsuari(usuari);
-            ugc.setBloquejat(false);
-
-            usuarisGrupCorreus.add(ugc);
+            usuarisGrupCorreus.add(usuariGrupCorreuDto);
         }
         //grupCorreuSaved.setUsuaris(new HashSet<>(usuarisGrup));
         grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisGrupCorreus));

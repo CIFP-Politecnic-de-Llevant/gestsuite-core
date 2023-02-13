@@ -85,6 +85,9 @@ public class SincronitzacioController {
     private ObservacioService observacioService;
 
     @Autowired
+    private UsuariGrupCorreuService usuariGrupCorreuService;
+
+    @Autowired
     private CalendariService calendariService;
 
     @Value("${centre.usuaris.passwordinicial}")
@@ -1654,7 +1657,7 @@ public class SincronitzacioController {
             }
             if (!trobat) {
                 //Esborrem els usuaris del grup de correu
-                grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreu);
+                grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreu);
 
                 //Esborrem els grups de correu del grup de correu
                 grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreu);
@@ -1679,9 +1682,9 @@ public class SincronitzacioController {
             System.out.println("PROCESSANT GRUP" + grupCorreu.getGsuiteEmail());
 
             //Esborrem els usuaris del grup de correu
-            grupCorreuService.esborrarUsuarisGrupCorreu(grupCorreu);
+            List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreu);
             //grupCorreu.setUsuaris(new HashSet<>());
-            grupCorreu.setUsuarisGrupCorreu(new HashSet<>());
+            grupCorreu.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
 
             //Esborrem els grups de correu del grup de correu
             grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreu);
@@ -1693,14 +1696,10 @@ public class SincronitzacioController {
                 UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 GrupCorreuDto grupCorreuMember = grupCorreuService.findByEmail(member.getEmail());
                 if (usuari != null) {
-                    grupCorreuService.insertUsuari(grupCorreu, usuari, false);
+                    UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, false);
                     //grupCorreu.getUsuaris().add(usuari);
-                    UsuariGrupCorreuDto ugc = new UsuariGrupCorreuDto();
-                    ugc.setGrupCorreu(grupCorreu);
-                    ugc.setUsuari(usuari);
-                    ugc.setBloquejat(false);
 
-                    grupCorreu.getUsuarisGrupCorreu().add(ugc);
+                    grupCorreu.getUsuarisGrupCorreu().add(usuariGrupCorreuDto);
                 }
                 if (grupCorreuMember != null) {
                     grupCorreuService.insertGrupCorreu(grupCorreu, grupCorreuMember);
