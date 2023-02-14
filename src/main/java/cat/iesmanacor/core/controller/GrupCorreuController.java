@@ -110,6 +110,7 @@ public class GrupCorreuController {
             if (grupCorreu == null) {
                 //Creem el grup de correu a la BBDD
                 grupCorreu = grupCorreuService.save(null, grup.getName(), grup.getEmail(), grup.getDescription(), GrupCorreuTipusDto.GENERAL);
+                log.info("Ha entrat a grupcorreu null");
             } else {
                 //Esborrem els usuaris del grup de correu
                 List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreu);
@@ -119,21 +120,16 @@ public class GrupCorreuController {
                 //Esborrem els grups de correu del grup de correu
                 grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreu);
                 grupCorreu.setGrupCorreus(new HashSet<>());
+
+                log.info("Ha entrat a grupcorreu not null");
             }
 
             //Afegim els membres del grup a la BBDD
             List<Member> members = gSuiteService.getMembers(grupCorreu.getGsuiteEmail());
 
             for (Member member : members) {
-                UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 GrupCorreuDto grupCorreuMember = grupCorreuService.findByEmail(member.getEmail());
-                if (usuari != null) {
-                    UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, false);
-                    //grupCorreu.getUsuaris().add(usuari);
 
-
-                    grupCorreu.getUsuarisGrupCorreu().add(usuariGrupCorreuDto);
-                }
                 if (grupCorreuMember != null) {
                     grupCorreuService.insertGrupCorreu(grupCorreu, grupCorreuMember);
                     grupCorreu.getGrupCorreus().add(grupCorreuMember);
@@ -141,6 +137,22 @@ public class GrupCorreuController {
             }
 
             grupCorreuService.save(grupCorreu);
+
+
+            //Com que controlem la relació N-M Usuari-Grup Correu amb una clase apart, hem de fer les modificacions
+            //DESPRÉS de guardar el grup de correu, sinó no ho guarda bé
+            for (Member member : members) {
+                UsuariDto usuari = usuariService.findByEmail(member.getEmail());
+
+                UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
+
+                if (usuari != null) {
+                    UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat!=null);
+                    //grupCorreu.getUsuaris().add(usuari);
+
+                    grupCorreu.getUsuarisGrupCorreu().add(usuariGrupCorreuDto);
+                }
+            }
 
             return new ResponseEntity<>(grupCorreu, HttpStatus.OK);
         } catch (Exception e){
@@ -262,7 +274,10 @@ public class GrupCorreuController {
         Multimap<UsuariDto, Boolean> usuaris = LinkedHashMultimap.create();
         for(JsonElement jsonUsuari: jsonUsuaris){
             Long idUsuari = jsonUsuari.getAsJsonObject().get("idusuari").getAsLong();
-            Boolean bloquejat = jsonUsuari.getAsJsonObject().get("bloquejat").getAsBoolean();
+            boolean bloquejat = false;
+            if(jsonUsuari.getAsJsonObject().get("bloquejat")!=null && !jsonUsuari.getAsJsonObject().get("bloquejat").isJsonNull()) {
+                bloquejat = jsonUsuari.getAsJsonObject().get("bloquejat").getAsBoolean();
+            }
             UsuariDto usuari = usuariService.findById(idUsuari);
             if(usuari!=null){
                 usuaris.put(usuari,bloquejat);

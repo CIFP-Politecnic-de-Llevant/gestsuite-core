@@ -42,8 +42,6 @@ public class GrupCorreuService {
     public GrupCorreuDto save(GrupCorreuDto gc) {
         ModelMapper modelMapper = new ModelMapper();
         GrupCorreu grupCorreu = modelMapper.map(gc, GrupCorreu.class);
-        grupCorreu.getUsuarisGrupsCorreu().forEach(ug->ug.setBloquejat(true));
-        usuariGrupCorreuRepository.saveAll(grupCorreu.getUsuarisGrupsCorreu());
         GrupCorreu grupCorreuSaved = grupCorreuRepository.save(grupCorreu);
         return modelMapper.map(grupCorreuSaved,GrupCorreuDto.class);
     }
@@ -124,16 +122,14 @@ public class GrupCorreuService {
        Usuari usuari = usuariRepository.findById(usuariDto.getIdusuari()).orElse(null);
        GrupCorreu grupCorreu = grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).orElse(null);
 
-       UsuariGrupCorreu usuariGrupCorreu = usuariGrupCorreuRepository.findByUsuariAndGrupCorreu(usuari,grupCorreu);
+       UsuariGrupCorreu usuariGrupCorreu = usuariGrupCorreuRepository.findByUsuari_IdusuariAndGrupCorreu_Idgrup(usuari.getIdusuari(),grupCorreu.getIdgrup());
 
        if(usuariGrupCorreu==null){
-           log.info("3333-Usuari null");
            usuariGrupCorreu = new UsuariGrupCorreu();
            usuariGrupCorreu.setGrupCorreu(grupCorreu);
            usuariGrupCorreu.setUsuari(usuari);
            usuariGrupCorreu.setBloquejat(bloquejat);
        } else {
-           log.info("444444 usuari no null");
            usuariGrupCorreu.setBloquejat(bloquejat);
        }
 

@@ -36,7 +36,7 @@ public class UsuariGrupCorreuService {
         Usuari usuari = usuariRepository.findById(usuariDto.getIdusuari()).orElse(null);
         GrupCorreu grupCorreu = grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).orElse(null);
 
-        UsuariGrupCorreu usuariGrupCorreu = usuariGrupCorreuRepository.findByUsuariAndGrupCorreu(usuari, grupCorreu);
+        UsuariGrupCorreu usuariGrupCorreu = usuariGrupCorreuRepository.findByUsuari_IdusuariAndGrupCorreu_Idgrup(usuari.getIdusuari(), grupCorreu.getIdgrup());
         if(usuariGrupCorreu!=null) {
             return modelMapper.map(usuariGrupCorreu, UsuariGrupCorreuDto.class);
         }
