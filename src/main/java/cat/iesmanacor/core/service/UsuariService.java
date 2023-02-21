@@ -137,7 +137,6 @@ public class UsuariService {
 
     public UsuariDto findById(Long id) {
         Usuari usuari = usuariRepository.findById(id).orElse(null);
-
         if(usuari != null) {
             ModelMapper modelMapper = new ModelMapper();
             return modelMapper.map(usuari, UsuariDto.class);

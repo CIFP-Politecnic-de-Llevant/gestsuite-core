@@ -144,9 +144,8 @@ public class GrupCorreuController {
             for (Member member : members) {
                 UsuariDto usuari = usuariService.findByEmail(member.getEmail());
 
-                UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
-
                 if (usuari != null) {
+                    UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
                     UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat!=null);
                     //grupCorreu.getUsuaris().add(usuari);
 
@@ -516,20 +515,23 @@ public class GrupCorreuController {
         grupCorreuSaved.setGrupCorreus(new HashSet<>());
 
 
+        //Desem els canvis
+        grupCorreuService.save(grupCorreuSaved);
+
         //Tornem a inserir els usuaris
+        //Com que controlem la relació N-M Usuari-Grup Correu amb una clase apart, hem de fer les modificacions
+        //DESPRÉS de guardar el grup de correu, sinó no ho guarda bé
         List<UsuariGrupCorreuDto> usuarisGrupCorreus= new ArrayList<>();
 
         for (UsuariDto usuari : usuarisGrup) {
-            UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreuSaved, usuari,false);
+            UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
+            UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreuSaved, usuari,usuariBloquejat!=null);
 
             usuarisGrupCorreus.add(usuariGrupCorreuDto);
         }
         //grupCorreuSaved.setUsuaris(new HashSet<>(usuarisGrup));
         grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisGrupCorreus));
 
-
-        //Desem els canvis
-        grupCorreuService.save(grupCorreuSaved);
 
         //Sincronitzem amb GSuite
         List<Member> members = gSuiteService.getMembers(grupCorreuSaved.getGsuiteEmail());
