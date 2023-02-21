@@ -386,7 +386,9 @@ public class SincronitzacioController {
         CentreDto centre = centres.get(0);
 
         if (centre.getSincronitzar()) {
-            List<String> logSimulacio = this.simular();
+            List<String> logSimulacio = new ArrayList<>();
+            logSimulacio.add("Resultat sincronització v. 2.0");
+            logSimulacio.addAll(this.simular());
 
             List<UsuariDto> usuarisNoActiusBeforeSync = usuariService.findUsuarisNoActius();
             if (usuarisNoActiusBeforeSync == null) {
@@ -1053,7 +1055,7 @@ public class SincronitzacioController {
                         u = usuariService.findByGestibCodi(codi);
                         if (u == null) {
                             UsuariDto alumne = usuariService.saveGestib(codi, nom, ap1, ap2, null, exp, grup, null, false, true);
-                            usuariService.save(alumne);
+                            //usuariService.save(alumne);
                         } else {
                             //Si estava inactiu i ara passa a actiu
                             if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
@@ -1071,11 +1073,11 @@ public class SincronitzacioController {
                             u.setGestibNom(nom);
                             u.setGestibCognom1(ap1);
                             u.setGestibCognom2(ap2);
-                            if(u.getGestibGrup()==null) {
+                            if (u.getGestibGrup() == null) {
                                 u.setGestibGrup(grup);
-                            } else if(u.getGestibGrup2()==null){
+                            } else if (!u.getGestibGrup().equals(grup) && u.getGestibGrup2() == null) {
                                 u.setGestibGrup2(grup);
-                            } else if(u.getGestibGrup3()==null){
+                            } else if (!u.getGestibGrup().equals(grup) && !u.getGestibGrup2().equals(grup) && u.getGestibGrup3() == null) {
                                 u.setGestibGrup3(grup);
                             }
                             u.setGestibExpedient(exp);
