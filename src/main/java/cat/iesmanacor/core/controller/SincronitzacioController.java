@@ -1071,7 +1071,13 @@ public class SincronitzacioController {
                             u.setGestibNom(nom);
                             u.setGestibCognom1(ap1);
                             u.setGestibCognom2(ap2);
-                            u.setGestibGrup(grup);
+                            if(u.getGestibGrup()==null) {
+                                u.setGestibGrup(grup);
+                            } else if(u.getGestibGrup2()==null){
+                                u.setGestibGrup2(grup);
+                            } else if(u.getGestibGrup3()==null){
+                                u.setGestibGrup3(grup);
+                            }
                             u.setGestibExpedient(exp);
                             u.setActiu(true);
                             usuariService.save(u);
@@ -1693,14 +1699,8 @@ public class SincronitzacioController {
             List<Member> members = gSuiteService.getMembers(grupCorreu.getGsuiteEmail());
 
             for (Member member : members) {
-                UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 GrupCorreuDto grupCorreuMember = grupCorreuService.findByEmail(member.getEmail());
-                if (usuari != null) {
-                    UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreu, usuari, false);
-                    //grupCorreu.getUsuaris().add(usuari);
 
-                    grupCorreu.getUsuarisGrupCorreu().add(usuariGrupCorreuDto);
-                }
                 if (grupCorreuMember != null) {
                     grupCorreuService.insertGrupCorreu(grupCorreu, grupCorreuMember);
                     grupCorreu.getGrupCorreus().add(grupCorreuMember);
@@ -1708,6 +1708,17 @@ public class SincronitzacioController {
             }
 
             grupCorreuService.save(grupCorreu);
+
+            //Com que controlem la relació N-M Usuari-Grup Correu amb una clase apart, hem de fer les modificacions
+            //DESPRÉS de guardar el grup de correu, sinó no ho guarda bé
+            for (Member member : members) {
+                UsuariDto usuari = usuariService.findByEmail(member.getEmail());
+                if (usuari != null) {
+                    UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
+
+                    grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat!=null);
+                }
+            }
         }
         log.info("Acaba processat grups de correu.");
     }
