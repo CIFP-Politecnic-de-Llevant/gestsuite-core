@@ -12,5 +12,6 @@ import java.util.List;
 @Repository
 public interface UsuariGrupCorreuRepository extends JpaRepository<UsuariGrupCorreu, UsuariGrupCorreuId> {
     List<UsuariGrupCorreu> findAllByUsuari(Usuari usuari);
+    List<UsuariGrupCorreu> findAllByGrupCorreu(GrupCorreu grupCorreu);
     UsuariGrupCorreu findByUsuari_IdusuariAndGrupCorreu_Idgrup(Long usuari, Long grupCorreu);
 }

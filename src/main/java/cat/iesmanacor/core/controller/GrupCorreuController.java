@@ -384,11 +384,27 @@ public class GrupCorreuController {
         Notificacio notificacio = new Notificacio();
         notificacio.setNotifyMessage("Grup desat correctament");
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        log.info("Desar usuari grup acabat");
+
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
     @PostMapping("/grupcorreu/autoemplenar")
-    public ResponseEntity<Notificacio> autoemplenaGrup(@RequestBody GrupCorreuDto grupCorreu) throws InterruptedException {
+    public ResponseEntity<Notificacio> autoemplenaGrup(@RequestBody String json) throws InterruptedException {
+        JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+
+        GrupCorreuDto grupCorreu = new GrupCorreuDto();
+
+        if(jsonObject.get("idgrup")!=null && !jsonObject.get("idgrup").isJsonNull()){
+            Long idGrupCorreu = jsonObject.get("idgrup").getAsLong();
+            grupCorreu = grupCorreuService.findById(idGrupCorreu);
+        }
+
+        //Esborrem els usuaris del grup de correu
+        List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreu);
+
+
         if (grupCorreu.getIdgrup() == null) {
             grupCorreu.setGrupCorreuTipus(GrupCorreuTipusDto.GENERAL);
             gSuiteService.createGroup(grupCorreu.getGsuiteEmail(), grupCorreu.getGsuiteNom(), grupCorreu.getGsuiteDescripcio());
@@ -505,10 +521,22 @@ public class GrupCorreuController {
             }
         }
 
-        //Esborrem els usuaris del grup de correu
-        List<UsuariGrupCorreuDto> usuarisBloquejats = grupCorreuService.esborrarUsuarisNoBloquejatsGrupCorreu(grupCorreuSaved);
+
         //grupCorreuSaved.setUsuaris(new HashSet<>());
-        grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
+        //grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisBloquejats));
+
+        log.info("ABANS USUARIS GRUP. Tamany: "+usuarisBloquejats.size());
+        for(UsuariGrupCorreuDto usuariGrupCorreuDto: usuarisBloquejats){
+            log.info("USU BLQ:"+usuariGrupCorreuDto.getUsuari().getGsuiteEmail());
+        }
+        usuarisGrup.addAll(usuarisBloquejats.stream().map(ug->ug.getUsuari()).collect(Collectors.toList()));
+
+        for(UsuariGrupCorreuDto usuariGrupCorreuDto: usuarisBloquejats){
+            log.info("USU BLQ2:"+usuariGrupCorreuDto.getUsuari().getGsuiteEmail());
+        }
+        for(UsuariDto usuariDto: usuarisGrup){
+            log.info("USUUU:"+usuariDto.getGsuiteEmail());
+        }
 
         //Esborrem els grups de correu del grup de correu
         grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreuSaved);
@@ -524,13 +552,19 @@ public class GrupCorreuController {
         List<UsuariGrupCorreuDto> usuarisGrupCorreus= new ArrayList<>();
 
         for (UsuariDto usuari : usuarisGrup) {
-            UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
+            log.info("USUARI GRUP: "+usuari.getGsuiteEmail());
+            UsuariGrupCorreuDto usuariBloquejat = usuarisBloquejats.stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
             UsuariGrupCorreuDto usuariGrupCorreuDto = grupCorreuService.insertUsuari(grupCorreuSaved, usuari,usuariBloquejat!=null);
 
             usuarisGrupCorreus.add(usuariGrupCorreuDto);
         }
+
+
         //grupCorreuSaved.setUsuaris(new HashSet<>(usuarisGrup));
         grupCorreuSaved.setUsuarisGrupCorreu(new HashSet<>(usuarisGrupCorreus));
+
+        //Desem els canvis
+        grupCorreuService.save(grupCorreuSaved);
 
 
         //Sincronitzem amb GSuite
@@ -549,6 +583,8 @@ public class GrupCorreuController {
         Notificacio notificacio = new Notificacio();
         notificacio.setNotifyMessage("Grup autoemplenat correctament");
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        log.info("Autoemplenat acabat");
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 

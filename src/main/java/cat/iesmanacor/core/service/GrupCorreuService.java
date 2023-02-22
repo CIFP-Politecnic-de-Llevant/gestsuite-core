@@ -20,10 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -152,11 +149,11 @@ public class GrupCorreuService {
     public List<UsuariGrupCorreuDto> esborrarUsuarisNoBloquejatsGrupCorreu(GrupCorreuDto grupCorreuDto) {
         ModelMapper modelMapper = new ModelMapper();
 
-        List<UsuariGrupCorreu> usuarisGrupCorreus = grupCorreuRepository
-                .findById(grupCorreuDto.getIdgrup())
-                .get().getUsuarisGrupsCorreu()
-                .stream().filter(ug->ug.getGrupCorreu().getIdgrup().equals(grupCorreuDto.getIdgrup()))
-                .collect(Collectors.toList());
+        GrupCorreu grupCorreu = modelMapper.map(grupCorreuDto,GrupCorreu.class);
+
+        log.info("Grup correu dins funcio"+grupCorreuDto.getGsuiteEmail()+" - "+grupCorreuDto.getIdgrup());
+
+        List<UsuariGrupCorreu> usuarisGrupCorreus = usuariGrupCorreuRepository.findAllByGrupCorreu(grupCorreu);
 
         //Esborrem els no bloquejats
         usuariGrupCorreuRepository.deleteAll(usuarisGrupCorreus.stream().filter(ug->!ug.getBloquejat()).collect(Collectors.toList()));
@@ -164,9 +161,26 @@ public class GrupCorreuService {
         //Retornem els bloquejats
         List<UsuariGrupCorreu> usuariGrupCorreusBloquejats = usuarisGrupCorreus.stream().filter(ug->ug.getBloquejat()).collect(Collectors.toList());
 
-        return usuariGrupCorreusBloquejats.stream()
+        List<UsuariGrupCorreuDto> usuariGrupCorreuDtos = new ArrayList<>();
+        for (UsuariGrupCorreu usuariGrupCorreu:usuariGrupCorreusBloquejats){
+            log.info("44Usuari " + usuariGrupCorreu.getUsuari().getGsuiteEmail() +" bloquejat al grup "+usuariGrupCorreu.getGrupCorreu().getGsuiteEmail());
+
+            UsuariDto usuariDto = modelMapper.map(usuariGrupCorreu.getUsuari(),UsuariDto.class);
+            boolean bloquejat = usuariGrupCorreu.getBloquejat();
+
+            UsuariGrupCorreuDto usuariGrupCorreuDto = new UsuariGrupCorreuDto();
+            usuariGrupCorreuDto.setUsuari(usuariDto);
+            usuariGrupCorreuDto.setGrupCorreu(grupCorreuDto);
+            usuariGrupCorreuDto.setBloquejat(bloquejat);
+
+            usuariGrupCorreuDtos.add(usuariGrupCorreuDto);
+        }
+
+        log.info("Tamany dins la funcio"+usuariGrupCorreuDtos.size());
+        return usuariGrupCorreuDtos;
+        /*return usuariGrupCorreusBloquejats.stream()
                 .map(gc->modelMapper.map(gc,UsuariGrupCorreuDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
     }
 
 
