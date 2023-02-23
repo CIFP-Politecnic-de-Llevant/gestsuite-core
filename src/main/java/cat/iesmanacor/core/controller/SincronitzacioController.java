@@ -1721,6 +1721,11 @@ public class SincronitzacioController {
                     grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat!=null);
                 }
             }
+
+            //Afegim els bloquejats
+            for(UsuariGrupCorreuDto usuaribloquejat: usuarisBloquejats){
+                grupCorreuService.insertUsuari(grupCorreu, usuaribloquejat.getUsuari(), true);
+            }
         }
         log.info("Acaba processat grups de correu.");
     }
