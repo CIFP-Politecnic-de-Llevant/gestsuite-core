@@ -8,6 +8,7 @@ import cat.iesmanacor.core.dto.google.GrupCorreuDto;
 import cat.iesmanacor.core.dto.google.GrupCorreuTipusDto;
 import cat.iesmanacor.core.model.gestib.Centre;
 import cat.iesmanacor.core.model.gestib.Usuari;
+import cat.iesmanacor.core.model.gestib.UsuariGrupCorreu;
 import cat.iesmanacor.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.Group;
@@ -1740,6 +1741,23 @@ public class SincronitzacioController {
                 List<Group> grupsProfessorOld = gSuiteService.getUserGroups(usuari.getGsuiteEmail());
                 List<GrupCorreuDto> grupsProfessorNew = new ArrayList<>();
 
+
+                //Usuaris bloquejats
+                for(Group grupOld: grupsProfessorOld){
+                    GrupCorreuDto grupCorreuDto = grupCorreuService.findByEmail(grupOld.getEmail());
+                    if(grupCorreuDto!=null){
+                        List<UsuariGrupCorreuDto> usuarisGrupCorreuBloquejats = grupCorreuDto.getUsuarisGrupCorreu().stream().filter(ugc->ugc.isBloquejat()).collect(Collectors.toList());
+                        for(UsuariGrupCorreuDto usuariGrupCorreuDto: usuarisGrupCorreuBloquejats){
+                            boolean pertanyAlGrup = this.pertanyAlGrup(usuariGrupCorreuDto.getGrupCorreu().getGsuiteEmail(), grupsProfessorOld);
+
+                            if (!pertanyAlGrup) {
+                                gSuiteService.createMember(usuari.getGsuiteEmail(), usuariGrupCorreuDto.getGrupCorreu().getGsuiteEmail());
+                            }
+                            grupsProfessorNew.add(usuariGrupCorreuDto.getGrupCorreu());
+                        }
+                    }
+                }
+
                 //Afegir al departament
                 if (usuari.getGestibDepartament() != null && !usuari.getGestibDepartament().isEmpty()) {
                     DepartamentDto departamentUsuari = departamentService.findByGestibIdentificador(usuari.getGestibDepartament());
@@ -2008,6 +2026,22 @@ public class SincronitzacioController {
 
                     List<GrupCorreuDto> grupsCorreuAlumne = grupCorreuService.findByCodiGrupGestib(grupAlumne);
                     for (GrupCorreuDto grupCorreu : grupsCorreuAlumne) {
+                        //Usuaris bloquejats
+                        for(Group grupOld: grupsAlumneOld){
+                            GrupCorreuDto grupCorreuDto = grupCorreuService.findByEmail(grupOld.getEmail());
+                            if(grupCorreuDto!=null){
+                                List<UsuariGrupCorreuDto> usuarisGrupCorreuBloquejats = grupCorreuDto.getUsuarisGrupCorreu().stream().filter(ugc->ugc.isBloquejat()).collect(Collectors.toList());
+                                for(UsuariGrupCorreuDto usuariGrupCorreuDto: usuarisGrupCorreuBloquejats){
+                                    boolean pertanyAlGrup = this.pertanyAlGrup(usuariGrupCorreuDto.getGrupCorreu().getGsuiteEmail(), grupsAlumneOld);
+
+                                    if (!pertanyAlGrup) {
+                                        gSuiteService.createMember(usuari.getGsuiteEmail(), usuariGrupCorreuDto.getGrupCorreu().getGsuiteEmail());
+                                    }
+                                    grupsAlumneNew.add(usuariGrupCorreuDto.getGrupCorreu());
+                                }
+                            }
+                        }
+
                         if (grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT)) {
                             boolean pertanyAlGrup = this.pertanyAlGrup(grupCorreu.getGsuiteEmail(), grupsAlumneOld);
 
