@@ -43,7 +43,7 @@ public @Data class GrupCorreu {
     private String gsuiteDescripcio;
 
 
-    @OneToMany(mappedBy="grupCorreu", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy="grupCorreu", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private Set<UsuariGrupCorreu> usuarisGrupsCorreu = new HashSet<>();
 
