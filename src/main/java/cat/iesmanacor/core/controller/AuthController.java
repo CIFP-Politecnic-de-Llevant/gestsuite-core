@@ -11,12 +11,17 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.HashSet;
@@ -46,7 +51,7 @@ public class AuthController {
     private String dominiPrincipal;
 
     @PostMapping("/auth/google/login")
-    public ResponseEntity<?> loginUserGoogle(@RequestBody String token) throws GeneralSecurityException, IOException {
+    public ResponseEntity<?> loginUserGoogle(@RequestBody String token, HttpServletRequest request, HttpServletResponse response) throws GeneralSecurityException, IOException {
 
         log.info("Token:" + token);
 
@@ -84,7 +89,18 @@ public class AuthController {
                 if (usuari.getGestibAlumne() != null && usuari.getGestibAlumne()) {
                     rols.add(RolDto.ALUMNE);
                 }
-                return new ResponseEntity<>(tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList())), HttpStatus.OK);
+
+                ResponseCookie resCookie = ResponseCookie.from("hola", "adeu")
+                        .httpOnly(true)
+                        .secure(true)
+                        .path("/")
+                        .maxAge(24 * 60 * 60)
+                        .domain("localhost")
+                        .build();
+
+                String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()));
+                return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(tokenGenerated);
+
             } else{
                 List<UsuariDto> usuaris = usuariService.findAll();
 
@@ -93,7 +109,19 @@ public class AuthController {
                 if( (email.equals(this.administrador) && usuaris.isEmpty()) || email.equals(this.adminDeveloper)){
                     Set<RolDto> rols = new HashSet<>();
                     rols.add(RolDto.ADMINISTRADOR);
-                    return new ResponseEntity<>(tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList())), HttpStatus.OK);
+
+                    ResponseEntity responseEntity = new ResponseEntity<>(tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList())), HttpStatus.OK);
+
+                    ResponseCookie resCookie = ResponseCookie.from("hola", "adeu")
+                            .httpOnly(true)
+                            .secure(true)
+                            .path("/")
+                            .maxAge(24 * 60 * 60)
+                            .domain("localhost")
+                            .build();
+
+                    String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()));
+                    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(tokenGenerated);
                 }
             }
         } else {
