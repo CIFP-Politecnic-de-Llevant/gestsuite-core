@@ -185,6 +185,21 @@ public class UsuariController {
         }
     }
 
+    @GetMapping("/usuaris/profile")
+    public ResponseEntity<UsuariDto> getProfile(HttpServletRequest request) throws Exception {
+        Claims claims = tokenManager.getClaims(request);
+        String myEmail = (String) claims.get("email");
+
+        UsuariDto myUser = usuariService.findByEmail(myEmail);
+
+        //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        if (myUser != null && myUser.getGsuiteEmail() != null) {
+            return new ResponseEntity<>(myUser, HttpStatus.OK);
+        } else {
+            throw new Exception("Sense permisos");
+        }
+    }
+
     @GetMapping("/usuaris/profile-by-gestib-codi/{id}")
     public ResponseEntity<UsuariDto> getUsuariByGestibCodi(@PathVariable("id") String gestibCodi, HttpServletRequest request) throws Exception {
         Claims claims = tokenManager.getClaims(request);
