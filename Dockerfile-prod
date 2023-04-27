@@ -1,0 +1,15 @@
+FROM maven:3-amazoncorretto-11 as build-stage
+WORKDIR /resources
+
+COPY /api/gestsuite-common/target/common-0.0.1-SNAPSHOT.jar .
+COPY /api/gestsuite-common/pom.xml .
+RUN mvn clean install:install-file -Dfile=/resources/common-0.0.1-SNAPSHOT.jar -DpomFile=/resources/pom.xml
+
+COPY /api/gestsuite-core .
+RUN mvn clean compile install package -Pdocker -f pom.xml
+
+COPY /documentacio/iesmanacor-e0d4f26d9c2c.json .
+
+FROM amazoncorretto:11-alpine-jdk as production-stage
+COPY --from=build-stage /resources/target/core-0.0.1-SNAPSHOT.jar core.jar
+ENTRYPOINT ["java","-jar","/core.jar"]
