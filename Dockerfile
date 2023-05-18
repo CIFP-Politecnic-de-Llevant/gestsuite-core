@@ -2,7 +2,7 @@ FROM maven:3-amazoncorretto-11 as build-stage-core
 WORKDIR /resources
 
 COPY /api/gestsuite-common/ /external/
-RUN mvn clean install -f /external/pom.xml
+RUN mvn clean compile install -f /external/pom.xml
 
 
 COPY /api/gestsuite-core .
