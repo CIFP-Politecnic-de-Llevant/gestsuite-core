@@ -5,7 +5,7 @@ COPY /api/gestsuite-common/ /external/
 RUN mvn clean compile install -f /external/pom.xml
 
 COPY /api/gestsuite-core .
-RUN mvn clean spring-boot:run -f pom.xml
+RUN mvn clean compile spring-boot:run -f pom.xml
 
 FROM maven:3-amazoncorretto-17 as build-stage-core
 WORKDIR /resources
