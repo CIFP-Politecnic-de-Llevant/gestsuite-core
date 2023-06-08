@@ -1,5 +1,7 @@
 FROM maven:3-amazoncorretto-17 as develop-stage-core
-WORKDIR /resources
+WORKDIR /app
+
+COPY /config/iesmanacor-e0d4f26d9c2c.json /resources/iesmanacor-e0d4f26d9c2c.json
 
 COPY /api/gestsuite-common/ /external/
 RUN mvn clean compile install -f /external/pom.xml
