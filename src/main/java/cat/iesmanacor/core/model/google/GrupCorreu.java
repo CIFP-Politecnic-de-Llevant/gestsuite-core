@@ -15,7 +15,7 @@ import java.util.Set;
 
 
 @Entity
-@Table(name = "im_grup_correu")
+@Table(name = "pll_grup_correu")
 @EqualsAndHashCode(exclude={"usuarisGrupsCorreu","grupCorreus","grups"})
 public @Data class GrupCorreu {
     @Id

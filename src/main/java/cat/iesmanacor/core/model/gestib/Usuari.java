@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "im_usuari")
+@Table(name = "pll_usuari")
 public @Data class Usuari {
     @Id
     @Column(name = "idusuari")
@@ -19,7 +19,7 @@ public @Data class Usuari {
     //@UniqueConstraint -> per crear una clau única (primària) per a cada fila i no duplicar files
     @Enumerated(EnumType.STRING)
     @ElementCollection(targetClass = Rol.class, fetch = FetchType.EAGER)
-    @CollectionTable(name="im_usuari_rols",uniqueConstraints = @UniqueConstraint(columnNames={"rols","usuari_idusuari"}))
+    @CollectionTable(name="pll_usuari_rols",uniqueConstraints = @UniqueConstraint(columnNames={"rols","usuari_idusuari"}))
     private Set<Rol> rols;
 
 

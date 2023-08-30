@@ -8,7 +8,7 @@ import lombok.Data;
 import javax.persistence.*;
 
 @Entity
-@Table(name="im_grup_correu_usuaris")
+@Table(name="pll_grup_correu_usuaris")
 @IdClass(UsuariGrupCorreuId.class)
 public @Data class UsuariGrupCorreu {
     @Id

@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "im_fitxer_bucket")
+@Table(name = "pll_fitxer_bucket")
 public @Data class FitxerBucket {
     @Id
     @Column(name = "idfitxer")

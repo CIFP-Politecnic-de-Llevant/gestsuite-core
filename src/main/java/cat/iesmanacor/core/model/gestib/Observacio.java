@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "im_observacio")
+@Table(name = "pll_observacio")
 //@EqualsAndHashCode(exclude="programacio")
 public @Data class Observacio {
     @Id

@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "im_llistat")
+@Table(name = "pll_llistat")
 public @Data class LlistatGoogle {
     @Id
     @Column(name = "idllistat")

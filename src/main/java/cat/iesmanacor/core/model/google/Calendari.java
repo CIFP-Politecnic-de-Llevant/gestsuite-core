@@ -9,7 +9,7 @@ import java.util.Set;
 
 
 @Entity
-@Table(name = "im_calendari")
+@Table(name = "pll_calendari")
 public @Data class Calendari {
     @Id
     @Column(name = "idcalendari")

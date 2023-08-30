@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "im_centre")
+@Table(name = "pll_centre")
 //@EqualsAndHashCode(exclude="programacio")
 public @Data class Centre {
     @Id
