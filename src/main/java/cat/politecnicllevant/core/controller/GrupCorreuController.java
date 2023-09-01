@@ -2,11 +2,11 @@ package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
-import cat.iesmanacor.core.dto.gestib.*;
+import cat.politecnicllevant.core.dto.gestib.*;
 import cat.politecnicllevant.core.dto.gestib.*;
 import cat.politecnicllevant.core.dto.google.GrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuTipusDto;
-import cat.iesmanacor.core.service.*;
+import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.Group;
 import com.google.api.services.directory.model.Member;

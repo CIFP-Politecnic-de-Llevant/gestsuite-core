@@ -6,7 +6,7 @@ import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.CursDto;
 import cat.politecnicllevant.core.dto.gestib.GrupDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
-import cat.iesmanacor.core.service.*;
+import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.CursService;
 import cat.politecnicllevant.core.service.GSuiteService;
 import cat.politecnicllevant.core.service.GrupService;

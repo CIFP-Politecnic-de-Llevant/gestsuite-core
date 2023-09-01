@@ -7,7 +7,7 @@ import cat.politecnicllevant.core.dto.gestib.UsuariDto;
 import cat.politecnicllevant.core.dto.google.DispositiuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.LlistatGoogleTipusDto;
-import cat.iesmanacor.core.service.*;
+import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.ChromeOsDevice;
 import com.google.api.services.directory.model.User;

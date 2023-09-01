@@ -8,7 +8,7 @@
 		<version>2.7.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>cat.iesmanacor</groupId>
+	<groupId>cat.politecnicllevant</groupId>
 	<artifactId>core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>core</name>
@@ -178,7 +178,7 @@
 
 
 		<dependency>
-			<groupId>cat.iesmanacor</groupId>
+			<groupId>cat.politecnicllevant</groupId>
 			<artifactId>common</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 			<scope>compile</scope>

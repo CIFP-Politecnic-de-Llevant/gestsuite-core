@@ -1,7 +1,7 @@
 package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.core.dto.gestib.SubmateriaDto;
-import cat.iesmanacor.core.service.*;
+import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.SubmateriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

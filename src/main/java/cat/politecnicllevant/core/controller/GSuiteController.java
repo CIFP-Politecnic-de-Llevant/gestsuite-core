@@ -6,7 +6,7 @@ import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.CursDto;
 import cat.politecnicllevant.core.dto.gestib.GrupDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
-import cat.iesmanacor.core.service.*;
+import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.User;

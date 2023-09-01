@@ -1,7 +1,7 @@
 package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
-import cat.iesmanacor.core.dto.google.*;
+import cat.politecnicllevant.core.dto.google.*;
 import cat.politecnicllevant.core.dto.google.*;
 import cat.politecnicllevant.core.service.CalendariService;
 import cat.politecnicllevant.core.service.GSuiteService;
