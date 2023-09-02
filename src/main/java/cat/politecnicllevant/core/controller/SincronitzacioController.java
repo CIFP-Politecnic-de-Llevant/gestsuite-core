@@ -509,7 +509,9 @@ public class SincronitzacioController {
                             GrupDto g = grupService.findByGestibIdentificador(codiGrup);
                             CursDto cursGrup = cursService.findByGestibIdentificador(codiCurs);
 
-                            if (g == null) {
+                            if(cursGrup==null){
+                                resultat.add("Avís! El grup " + codiGrup + " - " + nomGrup + " no té curs.");
+                            } else if (g == null) {
                                 resultat.add("Nou grup: " + nomGrup + " del curs " + cursGrup.getGestibNom());
                             }
                         }
@@ -774,7 +776,9 @@ public class SincronitzacioController {
 
                     SubmateriaDto s = submateriaService.findByGestibIdentificador(codi);
                     CursDto cursSubmateria = cursService.findByGestibIdentificador(curs);
-                    if (s == null) {
+                    if(cursSubmateria == null){
+                        resultat.add("Avís! La submateria " + codi + " - " + nom + " no té curs.");
+                    } else if (s == null) {
                         resultat.add("Nova submatèria: " + nom + " (" + nomCurt + ") del curs " + cursSubmateria.getGestibNom());
                     }
                 }

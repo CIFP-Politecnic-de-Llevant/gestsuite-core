@@ -82,18 +82,20 @@ public class GSuiteService {
                 String pageToken = query.getNextPageToken();
 
                 //Resultat
-                result.addAll(users);
+                if(users!=null) {
+                    result.addAll(users);
 
-                while (pageToken != null) {
-                    Users query2 = service.users().list()
-                            .setDomain(domain)
-                            .setPageToken(pageToken)
-                            .execute();
-                    List<User> users2 = query2.getUsers();
-                    pageToken = query2.getNextPageToken();
+                    while (pageToken != null) {
+                        Users query2 = service.users().list()
+                                .setDomain(domain)
+                                .setPageToken(pageToken)
+                                .execute();
+                        List<User> users2 = query2.getUsers();
+                        pageToken = query2.getNextPageToken();
 
-                    if(users2!=null) {
-                        result.addAll(users2);
+                        if (users2 != null) {
+                            result.addAll(users2);
+                        }
                     }
                 }
             }
