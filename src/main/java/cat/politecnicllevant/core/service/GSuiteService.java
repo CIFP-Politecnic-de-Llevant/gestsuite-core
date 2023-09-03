@@ -182,6 +182,7 @@ public class GSuiteService {
                 return createUser(email, nom, cognoms, personalID, unitatOrganitzativa, retry + 1);
             }
             log.error("Error createUser: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa);
+            log.error(e.getMessage());
         }
         return null;
     }

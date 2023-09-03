@@ -203,9 +203,13 @@ public class GrupCorreuService {
 
     @Transactional
     public void insertGrupCorreu(GrupCorreuDto grupCorreu, GrupCorreuDto membreGrupCorreuDto) {
-        ModelMapper modelMapper = new ModelMapper();
-        GrupCorreu membreGrupCorreu = modelMapper.map(membreGrupCorreuDto,GrupCorreu.class);
-        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getGrupCorreus().add(membreGrupCorreu);
+        try {
+            ModelMapper modelMapper = new ModelMapper();
+            GrupCorreu membreGrupCorreu = modelMapper.map(membreGrupCorreuDto, GrupCorreu.class);
+            grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getGrupCorreus().add(membreGrupCorreu);
+        } catch (Exception e) {
+            log.error("Error al insertar grup de correu",e);
+        }
     }
 
 

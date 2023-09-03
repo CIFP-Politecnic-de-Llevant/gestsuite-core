@@ -2042,15 +2042,9 @@ public class SincronitzacioController {
         }
 
         switch (format) {
-            case "ncognom1":
-                username = nom.charAt(0) + cognom1.trim();
-                break;
-            case "ncognom1exp":
-                username = nom.charAt(0) + cognom1.trim() + usuari.getGestibExpedient();
-                break;
-            case "n.cognom1cognom2":
-                username = nom.charAt(0) + "." + cognom1.trim() + cognom2.trim();
-                break;
+            case "ncognom1" -> username = nom.charAt(0) + cognom1.trim();
+            case "ncognom1exp" -> username = nom.charAt(0) + cognom1.trim() + usuari.getGestibExpedient();
+            case "n.cognom1cognom2" -> username = nom.charAt(0) + "." + cognom1.trim() + cognom2.trim();
         }
 
         username = username.trim().toLowerCase();
@@ -2062,10 +2056,10 @@ public class SincronitzacioController {
         }
 
         //Si existeix cerquem el més proper
-        int i = 1;
+        int i = 0;
         while (u != null) {
+            i++; //Incrementem aquí perquè quan surti del bucle ha de mantenir el mateix valor.
             u = gSuiteService.getUserById(username + i + domini);
-            i++;
         }
 
         return username + i + domini;
