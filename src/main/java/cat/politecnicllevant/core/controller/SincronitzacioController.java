@@ -2044,9 +2044,9 @@ public class SincronitzacioController {
                 }
             }
 
-            if(usuari.getGestibProfessor()){
+            if(usuari.getGestibProfessor() != null && usuari.getGestibProfessor()){
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOProfessors);
-            } else if(usuari.getGestibAlumne()){
+            } else if(usuari.getGestibAlumne()!=null && usuari.getGestibAlumne()){
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAlumnes);
             } else {
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAltres);
