@@ -901,7 +901,7 @@ public class SincronitzacioController {
                             }
                         } else {
                             //Curs nou
-                            cursService.save(codiCurs, descCurs, this.defaultUOAlumnes);
+                            cursService.save(codiCurs, descCurs);
                         }
                     }
 
@@ -949,7 +949,7 @@ public class SincronitzacioController {
                                     }
                                 } else {
                                     //Grup nou
-                                    grupService.save(codiGrup, nomGrup, codiCurs, tutor1, tutor2, tutor3);
+                                    grupService.save(codiGrup, nomGrup, codiCurs, tutor1, tutor2, tutor3, this.defaultUOAlumnes);
                                 }
                             }
                         }
@@ -1434,14 +1434,13 @@ public class SincronitzacioController {
 
                 //Unitat organitzativa de l'alumne
                 GrupDto grup = grupService.findByGestibIdentificador(usuari.getGestibGrup());
-                CursDto curs = null;
                 if (grup != null) {
-                    curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
+                    CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
                     String rutaUnitat = "";
-                    if (curs.getGsuiteUnitatOrganitzativa() == null || curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                    if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
                         rutaUnitat = this.defaultUOAlumnes;
                     } else {
-                        rutaUnitat = curs.getGsuiteUnitatOrganitzativa();
+                        rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
                     }
 
                     String nom = usuari.getGestibNom();
@@ -1451,7 +1450,7 @@ public class SincronitzacioController {
                         nom = UtilService.capitalize(nom);
                         cognoms = UtilService.capitalize(cognoms);
                     } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
-                        if (curs.getGsuiteUnitatOrganitzativa() == null || curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                        if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
                             cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
                         } else {
                             cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
@@ -1460,7 +1459,7 @@ public class SincronitzacioController {
                         cognoms = UtilService.capitalize(cognoms);
                     }
 
-                    log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
+                    log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + grup.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
 
                     User usuariGSuite = gSuiteService.createUser(username, nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
 
@@ -1914,10 +1913,10 @@ public class SincronitzacioController {
                                 CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
 
                                 String rutaUnitat = "";
-                                if (curs.getGsuiteUnitatOrganitzativa() == null || curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                                if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
                                     rutaUnitat = this.defaultUOAlumnes;
                                 } else {
-                                    rutaUnitat = curs.getGsuiteUnitatOrganitzativa();
+                                    rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
                                 }
 
                                 String nom = usuari.getGestibNom();
@@ -1927,7 +1926,7 @@ public class SincronitzacioController {
                                     nom = UtilService.capitalize(nom);
                                     cognoms = UtilService.capitalize(cognoms);
                                 } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
-                                    if (curs.getGsuiteUnitatOrganitzativa() == null || curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                                    if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
                                         cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
                                     } else {
                                         cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();

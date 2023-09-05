@@ -12,6 +12,10 @@ public @Data class Grup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idgrup;
 
+    /* GSUITE */
+    @Column(name = "gsuite_unitat_organitzativa", nullable = true, length = 2048)
+    private String gsuiteUnitatOrganitzativa;
+
     /* GESTIB */
     @Column(name = "gestib_identificador", unique = true, nullable = false, length = 2048)
     private String gestibIdentificador;

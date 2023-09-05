@@ -26,7 +26,7 @@ public class GrupService {
     }
 
     @Transactional
-    public GrupDto save(String identificador, String nom, String codiCurs, String tutor1, String tutor2, String tutor3) {
+    public GrupDto save(String identificador, String nom, String codiCurs, String tutor1, String tutor2, String tutor3, String unitatOrganitzativa) {
         ModelMapper modelMapper = new ModelMapper();
 
         Grup g = new Grup();
@@ -37,6 +37,7 @@ public class GrupService {
         g.setGestibTutor2(tutor2);
         g.setGestibTutor3(tutor3);
         g.setActiu(true);
+        g.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
 
         Grup grupSaved = grupRepository.save(g);
         return modelMapper.map(grupSaved,GrupDto.class);

@@ -25,13 +25,12 @@ public class CursService {
     }
 
     @Transactional
-    public CursDto save(String identificador, String nom, String unitatOrganitzativa) {
+    public CursDto save(String identificador, String nom) {
         ModelMapper modelMapper = new ModelMapper();
 
         Curs c = new Curs();
         c.setGestibIdentificador(identificador);
         c.setGestibNom(nom);
-        c.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
         c.setActiu(true);
 
         Curs cursSaved = cursRepository.save(c);

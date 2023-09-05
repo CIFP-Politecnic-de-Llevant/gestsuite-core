@@ -1,18 +1,20 @@
 package cat.politecnicllevant.core.controller;
 
+import cat.politecnicllevant.common.model.Notificacio;
+import cat.politecnicllevant.common.model.NotificacioTipus;
+import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.CursDto;
 import cat.politecnicllevant.core.dto.gestib.GrupDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
-import cat.politecnicllevant.core.service.CursService;
-import cat.politecnicllevant.core.service.GrupService;
-import cat.politecnicllevant.core.service.TokenManager;
-import cat.politecnicllevant.core.service.UsuariService;
+import cat.politecnicllevant.core.service.*;
+import com.google.api.services.directory.model.User;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +33,16 @@ public class GrupController {
 
     @Autowired
     private UsuariService usuariService;
+
+    @Autowired
+    private GSuiteService gSuiteService;
+
+    @Autowired
+    private Gson gson;
+
+    @Value("${centre.gsuite.fullname.alumnes}")
+    private String formatNomGSuiteAlumnes;
+
 
     @GetMapping({"/grup/llistat","/public/grup/llistat"})
     public ResponseEntity<List<GrupDto>> getGrups() {
@@ -64,4 +76,52 @@ public class GrupController {
         return new ResponseEntity<>(grups, HttpStatus.OK);
     }
 
+    @PostMapping("/grup/desaUO")
+    public ResponseEntity<Notificacio> desaUnitatOrganitzativa(@RequestBody String json) throws InterruptedException {
+        JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+
+        Long idGrup = jsonObject.get("idgrup").getAsLong();
+        String unitatOrganitzativa = jsonObject.get("uo").getAsString();
+
+        GrupDto grup = grupService.findById(idGrup);
+        grup.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
+        grupService.save(grup);
+
+        //Actualitzem nom, cognoms i UO dels alumnes
+        List<UsuariDto> alumnes = usuariService.findUsuarisByGestibGrup(grup.getGestibIdentificador());
+
+        for(UsuariDto alumne: alumnes){
+
+            String nom = alumne.getGestibNom();
+            String cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
+
+            if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2")){
+                nom = UtilService.capitalize(nom);
+                cognoms = UtilService.capitalize(cognoms);
+            } else if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")){
+                CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
+                if (curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
+                    cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
+                } else {
+                    cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
+                }
+                nom = UtilService.capitalize(nom);
+                cognoms = UtilService.capitalize(cognoms);
+            }
+
+            User user = gSuiteService.updateUser(alumne.getGsuiteEmail(), nom, cognoms , alumne.getGestibCodi(), grup.getGsuiteUnitatOrganitzativa());
+
+            if(user == null){
+                Notificacio notificacio = new Notificacio();
+                notificacio.setNotifyMessage("Error desant l'alumne "+alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + ". Comprovi que la Unitat Organitzativa és correcte.");
+                notificacio.setNotifyType(NotificacioTipus.ERROR);
+                return new ResponseEntity<>(notificacio, HttpStatus.NOT_ACCEPTABLE);
+            }
+        }
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Unitat Organitzativa del grup desada correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
 }

@@ -72,52 +72,43 @@ public class CursController {
         JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
 
         Long idCurs = jsonObject.get("id").getAsLong();
-        String unitatOrganitzativa = jsonObject.get("unitatOrganitzativa").getAsString();
 
         CursDto curs = cursService.findById(idCurs);
 
-        if(curs.getGsuiteUnitatOrganitzativa()==null || !curs.getGsuiteUnitatOrganitzativa().equals(unitatOrganitzativa)) {
-            List<GrupDto> grups = grupService.findAll().stream().filter(g -> g.getActiu() && g.getGestibCurs().equals(curs.getGestibIdentificador())).collect(Collectors.toList());
+        List<GrupDto> grups = grupService.findAll().stream().filter(g -> g.getActiu() && g.getGestibCurs().equals(curs.getGestibIdentificador())).collect(Collectors.toList());
 
-            for(GrupDto grup: grups){
-                List<UsuariDto> alumnes = usuariService.findUsuarisByGestibGrup(grup.getGestibIdentificador());
+        for(GrupDto grup: grups){
+            List<UsuariDto> alumnes = usuariService.findUsuarisByGestibGrup(grup.getGestibIdentificador());
 
-                for(UsuariDto alumne: alumnes){
+            for(UsuariDto alumne: alumnes){
 
-                    String nom = alumne.getGestibNom();
-                    String cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
+                String nom = alumne.getGestibNom();
+                String cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
 
-                    if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2")){
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
-                    } else if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")){
-                        if (curs.getGsuiteUnitatOrganitzativa() == null || curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
-                            cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
-                        } else {
-                            cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
-                        }
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
+                if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2")){
+                    nom = UtilService.capitalize(nom);
+                    cognoms = UtilService.capitalize(cognoms);
+                } else if(formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")){
+                    if (curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
+                        cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2();
+                    } else {
+                        cognoms = alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
                     }
+                    nom = UtilService.capitalize(nom);
+                    cognoms = UtilService.capitalize(cognoms);
+                }
 
-                    User user = gSuiteService.updateUser(alumne.getGsuiteEmail(), nom, cognoms , alumne.getGestibCodi(), unitatOrganitzativa);
+                User user = gSuiteService.updateUser(alumne.getGsuiteEmail(), nom, cognoms , alumne.getGestibCodi(), grup.getGsuiteUnitatOrganitzativa());
 
-                    if(user == null){
-                        Notificacio notificacio = new Notificacio();
-                        notificacio.setNotifyMessage("Error desant l'alumne "+alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + ". Comprovi que la Unitat Organitzativa és correcte.");
-                        notificacio.setNotifyType(NotificacioTipus.ERROR);
-                        return new ResponseEntity<>(notificacio, HttpStatus.NOT_ACCEPTABLE);
-                    }
+                if(user == null){
+                    Notificacio notificacio = new Notificacio();
+                    notificacio.setNotifyMessage("Error desant l'alumne "+alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + ". Comprovi que la Unitat Organitzativa és correcte.");
+                    notificacio.setNotifyType(NotificacioTipus.ERROR);
+                    return new ResponseEntity<>(notificacio, HttpStatus.NOT_ACCEPTABLE);
                 }
             }
-
-            //Desem a la BBDD
-            curs.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
-            cursService.save(curs);
         }
 
-
-        curs.setGsuiteUnitatOrganitzativa(unitatOrganitzativa);
         cursService.save(curs);
 
         Notificacio notificacio = new Notificacio();

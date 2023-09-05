@@ -163,7 +163,7 @@ public class GSuiteController {
                                 CursDto curs = null;
                                 if (grup != null) {
                                     curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
-                                    if (curs.getGsuiteUnitatOrganitzativa() != null && !curs.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                                    if (curs.getGestibNom() != null && !curs.getGestibNom().isEmpty() && grup.getGestibNom() != null && !grup.getGestibNom().isEmpty()) {
                                         cognoms += " " + curs.getGestibNom() + grup.getGestibNom();
                                     }
                                     nom = UtilService.capitalize(nom);

@@ -18,8 +18,8 @@ public @Data class Curs {
     @Column(name = "gestib_nom", nullable = false, length = 2048)
     private String gestibNom;
 
-    @Column(name = "gsuite_unitat_organitzativa", nullable = true, length = 2048)
-    private String gsuiteUnitatOrganitzativa;
+    //@Column(name = "gsuite_unitat_organitzativa", nullable = true, length = 2048)
+    //private String gsuiteUnitatOrganitzativa;
 
     @Column(name="actiu",nullable = false)
     private Boolean actiu;

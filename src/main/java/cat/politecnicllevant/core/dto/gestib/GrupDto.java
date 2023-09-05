@@ -11,4 +11,5 @@ public @Data class GrupDto {
     private String gestibTutor2;
     private String gestibTutor3;
     private Boolean actiu;
+    private String gsuiteUnitatOrganitzativa;
 }
