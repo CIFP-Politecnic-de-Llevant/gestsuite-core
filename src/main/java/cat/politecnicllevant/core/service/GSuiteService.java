@@ -707,7 +707,10 @@ public class GSuiteService {
 
 
         //Resultat
-        List<ChromeOsDevice> result = new ArrayList<>(chromes);
+        List<ChromeOsDevice> result = new ArrayList<>();
+        if(chromes!=null) {
+            result.addAll(chromes);
+        }
 
         while (pageToken != null) {
             ChromeOsDevices query2 = service.chromeosdevices().list(user.getCustomerId())
