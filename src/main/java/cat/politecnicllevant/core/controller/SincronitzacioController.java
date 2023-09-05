@@ -396,7 +396,7 @@ public class SincronitzacioController {
 
         if (centre.getSincronitzar()) {
             List<String> logSimulacio = new ArrayList<>();
-            logSimulacio.add("Resultat sincronització v. 2.0");
+            logSimulacio.add("Resultat sincronització v. 2.5");
             logSimulacio.addAll(this.simular());
 
             List<UsuariDto> usuarisNoActiusBeforeSync = usuariService.findUsuarisNoActius();
@@ -1578,14 +1578,16 @@ public class SincronitzacioController {
             log.info("Hi ha " + alumnesNous.size() + " alumnes nous");
 
             //Notificacions
-            StringBuilder bodyAll = new StringBuilder();
+            StringBuilder bodyAlu = new StringBuilder();
             Map<UsuariDto, String> tutors = new HashMap<>();
 
             for (UsuariDto alumne : alumnesNous) {
                 String infoAlumne = alumne.getGsuiteFullName() + ". Correu: " + alumne.getGsuiteEmail() + " - Contrasenya: " + this.passwordInicial + "\n\n";
+                bodyAlu.append(infoAlumne).append("<br>");
 
                 GrupDto grup = grupService.findByGestibIdentificador(alumne.getGestibGrup());
                 if (grup != null) {
+                    CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
                     UsuariDto tutor1 = usuariService.findByGestibCodi(grup.getGestibTutor1());
                     UsuariDto tutor2 = usuariService.findByGestibCodi(grup.getGestibTutor2());
                     UsuariDto tutor3 = usuariService.findByGestibCodi(grup.getGestibTutor3());
@@ -1601,7 +1603,15 @@ public class SincronitzacioController {
                     if (tutor3 != null) {
                         tutors.merge(tutor3, infoAlumne, (a, b) -> a + "<br><br>" + b);
                     }
+
+                    bodyAlu.append("Curs: ")
+                            .append(curs.getGestibNom())
+                            .append(grup.getGestibNom())
+                            .append("<br><br>");
+
                 }
+
+                bodyAlu.append("<br><br>");
             }
 
             for (Map.Entry<UsuariDto, String> entry : tutors.entrySet()) {
@@ -1614,7 +1624,7 @@ public class SincronitzacioController {
 
             String[] notifyAlumnes = this.notifyAlumnes.split(",");
             for (String email : notifyAlumnes) {
-                gMailService.sendMessage("Nous alumnes donats d'alta a GSuite", bodyAll.toString(), email);
+                gMailService.sendMessage("Nous alumnes donats d'alta a GSuite", bodyAlu.toString(), email);
             }
         }
 
