@@ -111,6 +111,15 @@ public class SincronitzacioController {
     @Value("${centre.gsuite.unitatorganitzativa.alumnes.default}")
     private String defaultUOAlumnes;
 
+    @Value("${centre.gsuite.unitatorganitzativa.professors.inactius}")
+    private String inactiuUOProfessors;
+
+    @Value("${centre.gsuite.unitatorganitzativa.alumnes.inactius}")
+    private String inactiuUOAlumnes;
+
+    @Value("${centre.gsuite.unitatorganitzativa.altres.inactius}")
+    private String inactiuUOAltres;
+
     @Value("${centre.gestib.sync.notify.professors}")
     private String notifyProfessors;
 
@@ -1999,6 +2008,7 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisNoActius = usuariService.findUsuarisNoActius().stream().filter(u -> u.getGsuiteSuspes() == null || !u.getGsuiteSuspes()).collect(Collectors.toList());
 
         log.info("Esborrem grups de Alumnes, Claustre, Professors, Tutors, Departament, Tutors FCT i Coordinacions");
+        log.info("Canviem l'usuari a la UO d'inactius");
         for (UsuariDto usuari : usuarisNoActius) {
             List<Group> grups = gSuiteService.getUserGroups(usuari.getGsuiteEmail());
             for (Group grup : grups) {
@@ -2023,6 +2033,15 @@ public class SincronitzacioController {
                     }
                 }
             }
+
+            if(usuari.getGestibProfessor()){
+                usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOProfessors);
+            } else if(usuari.getGestibAlumne()){
+                usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAlumnes);
+            } else {
+                usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAltres);
+            }
+            usuariService.save(usuari);
         }
     }
 
