@@ -1696,7 +1696,6 @@ public class SincronitzacioController {
                 grupCorreuService.esborrarGrup(grupCorreu);
 
                 log.info("Grup de correu " + grupCorreu.getGsuiteEmail() + " esborrat amb èxit");
-                grupCorreuService.esborrarGrup(grupCorreu);
             }
         }
 

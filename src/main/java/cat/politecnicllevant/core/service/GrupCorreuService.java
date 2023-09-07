@@ -225,6 +225,14 @@ public class GrupCorreuService {
 
     @Transactional
     public void esborrarGrup(GrupCorreuDto grupCorreuDto){
+        List<GrupCorreuDto> grupsCorreuAll = this.findAll();
+        for (GrupCorreuDto grupCorreuPare : grupsCorreuAll) {
+            if(grupCorreuPare.getGrupCorreus().stream().anyMatch(gc->gc.getIdgrup().equals(grupCorreuDto.getIdgrup()))){
+                grupCorreuPare.getGrupCorreus().remove(grupCorreuDto);
+                this.save(grupCorreuPare);
+            }
+        }
+
         ModelMapper modelMapper = new ModelMapper();
         GrupCorreu grupCorreu = modelMapper.map(grupCorreuDto,GrupCorreu.class);
         grupCorreuRepository.delete(grupCorreu);
