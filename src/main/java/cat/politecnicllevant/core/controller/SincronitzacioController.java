@@ -1981,17 +1981,19 @@ public class SincronitzacioController {
 
                     if (!trobat) {
                         GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(grupOld.getEmail());
-                        boolean isGrupClaustre = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.CLAUSTRE);
-                        boolean isGrupProfessors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.PROFESSORAT);
-                        boolean isGrupTutors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS);
-                        boolean isGrupDepartament = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.DEPARTAMENT);
-                        boolean isGrupTutorsFCT = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT);
-                        boolean isGrupCoordinacions = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.COORDINACIO);
-                        boolean isGrupAlumnat = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT);
-                        boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
-                        if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
-                            if (usuari.getGsuiteEmail() != null && grupOld.getEmail() != null && !isBloquejat) {
-                                gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupOld.getEmail());
+                        if(grupCorreu!=null && grupCorreu.getGrupCorreuTipus()!=null) {
+                            boolean isGrupClaustre = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.CLAUSTRE);
+                            boolean isGrupProfessors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.PROFESSORAT);
+                            boolean isGrupTutors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS);
+                            boolean isGrupDepartament = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.DEPARTAMENT);
+                            boolean isGrupTutorsFCT = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT);
+                            boolean isGrupCoordinacions = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.COORDINACIO);
+                            boolean isGrupAlumnat = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT);
+                            boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().anyMatch(ugc -> ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat());
+                            if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
+                                if (usuari.getGsuiteEmail() != null && grupOld.getEmail() != null && !isBloquejat) {
+                                    gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupOld.getEmail());
+                                }
                             }
                         }
                     }
