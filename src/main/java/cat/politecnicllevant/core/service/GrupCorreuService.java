@@ -163,7 +163,7 @@ public class GrupCorreuService {
 
         List<UsuariGrupCorreuDto> usuariGrupCorreuDtos = new ArrayList<>();
         for (UsuariGrupCorreu usuariGrupCorreu:usuariGrupCorreusBloquejats){
-            log.info("44Usuari " + usuariGrupCorreu.getUsuari().getGsuiteEmail() +" bloquejat al grup "+usuariGrupCorreu.getGrupCorreu().getGsuiteEmail());
+            log.info("Usuari " + usuariGrupCorreu.getUsuari().getGsuiteEmail() +" bloquejat al grup "+usuariGrupCorreu.getGrupCorreu().getGsuiteEmail());
 
             UsuariDto usuariDto = modelMapper.map(usuariGrupCorreu.getUsuari(),UsuariDto.class);
             boolean bloquejat = usuariGrupCorreu.getBloquejat();

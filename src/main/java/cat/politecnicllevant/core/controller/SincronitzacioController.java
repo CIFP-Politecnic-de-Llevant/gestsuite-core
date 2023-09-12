@@ -1683,6 +1683,7 @@ public class SincronitzacioController {
             for (Group grup : groups) {
                 if (grupCorreu.getGsuiteEmail().equals(grup.getEmail())) {
                     trobat = true;
+                    break;
                 }
             }
             if (!trobat) {
