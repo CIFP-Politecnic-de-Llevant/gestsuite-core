@@ -2048,10 +2048,13 @@ public class SincronitzacioController {
 
             if(usuari.getGestibProfessor() != null && usuari.getGestibProfessor()){
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOProfessors);
+                gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOProfessors);
             } else if(usuari.getGestibAlumne()!=null && usuari.getGestibAlumne()){
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAlumnes);
+                gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOAlumnes);
             } else {
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAltres);
+                gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOAltres);
             }
             usuariService.save(usuari);
         }
