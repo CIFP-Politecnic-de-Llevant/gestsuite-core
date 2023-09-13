@@ -1344,6 +1344,16 @@ public class SincronitzacioController {
             UsuariDto u = usuariService.findByGestibCodiOrEmail(personalIdKey, email);
             log.info("Personal Key:" + personalIdKey + "E-mail:" + email);
 
+            //Comprovació de seguretat. Podria passar que s'hagués actualitzat a GSuite sense número i
+            // després posar-li a posteriori quan ja s'ha posat com a eliminat. Solució: comprovar de nou si és a GSuite, i si hi és, no està eliminat
+            if(u!=null && u.getGsuiteEliminat() != null && !u.getGsuiteEliminat()){
+                User uGSuite = gSuiteService.getUserById(email);
+                if(uGSuite!=null){
+                    //Marcam com a NO eliminat, així a la pròxima comprovació l'actualitzarem.
+                    u.setGsuiteEliminat(false);
+                }
+            }
+
             if (u != null && (u.getGsuiteEliminat() == null || !u.getGsuiteEliminat())) {
                 log.info("Actualitzant usuari " + u.getGestibNom() + " " + u.getGestibCognom1() + " " + u.getGestibCognom2());
 
