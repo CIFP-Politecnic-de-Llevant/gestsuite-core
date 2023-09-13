@@ -233,6 +233,8 @@ public class GSuiteService {
                 return updateUser(email, nom, cognoms, personalID, unitatOrganitzativa, retry + 1);
             }
             log.error("Error updateUser: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa);
+        } catch (Exception e) {
+            log.error("Error updateUser other: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa+" - "+e.getMessage());
         }
         return null;
     }
