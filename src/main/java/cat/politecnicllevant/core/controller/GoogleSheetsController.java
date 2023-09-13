@@ -99,6 +99,7 @@ public class GoogleSheetsController {
     public ResponseEntity usuarisPerGrupCorreu(@RequestBody String json, HttpServletRequest request) throws GeneralSecurityException, IOException {
         JsonArray grupsCoreuJSON = gson.fromJson(json, JsonArray.class);
 
+
         List<GrupCorreuDto> grupsCoreu = new ArrayList<>();
         for(JsonElement grupCoreuJSON: grupsCoreuJSON){
             Long id = grupCoreuJSON.getAsJsonObject().get("idgrup").getAsLong();
