@@ -15,6 +15,7 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,9 @@ public class GoogleSheetsController {
 
     @Autowired
     private UsuariService usuariService;
+
+    @Autowired
+    private GrupCorreuService grupCorreuService;
 
     @Autowired
     private TokenManager tokenManager;
@@ -92,7 +96,18 @@ public class GoogleSheetsController {
     }
 
     @PostMapping("/google/sheets/usuarisgrupcorreu")
-    public ResponseEntity usuarisPerGrupCorreu(@RequestBody List<GrupCorreuDto> grupsCoreu, HttpServletRequest request) throws GeneralSecurityException, IOException {
+    public ResponseEntity usuarisPerGrupCorreu(@RequestBody String json, HttpServletRequest request) throws GeneralSecurityException, IOException {
+        JsonArray grupsCoreuJSON = gson.fromJson(json, JsonArray.class);
+
+        List<GrupCorreuDto> grupsCoreu = new ArrayList<>();
+        for(JsonElement grupCoreuJSON: grupsCoreuJSON){
+            Long id = grupCoreuJSON.getAsJsonObject().get("idgrup").getAsLong();
+            GrupCorreuDto grupCorreu = grupCorreuService.findById(id);
+            if(grupCorreu != null) {
+                grupsCoreu.add(grupCorreu);
+            }
+        }
+
         Claims claims = tokenManager.getClaims(request);
         String myEmail = (String) claims.get("email");
 
