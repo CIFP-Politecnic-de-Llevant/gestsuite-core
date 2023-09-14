@@ -547,7 +547,7 @@ public class SincronitzacioController {
                         String usuari = eProfe.getAttribute("username");
                         String departament = eProfe.getAttribute("departament");
 
-                        if (departament.length() == 0) {
+                        if (departament.isEmpty()) {
                             resultat.add("Avís! El professor/a " + codi + " - " + nom + " " + ap1 + " " + ap2 + "  no té departament.");
                         }
                         //Podria passar que algú creàs a mà l'usuari a GSuite (correctament) però no haguesin passat l'xml, per tant..
