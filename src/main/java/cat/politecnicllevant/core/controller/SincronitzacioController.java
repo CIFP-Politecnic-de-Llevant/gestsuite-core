@@ -2030,7 +2030,6 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisNoActius = usuariService.findUsuarisNoActius().stream().filter(u -> u.getGsuiteSuspes() == null || !u.getGsuiteSuspes()).collect(Collectors.toList());
 
         log.info("Esborrem grups de Alumnes, Claustre, Professors, Tutors, Departament, Tutors FCT i Coordinacions");
-        log.info("Canviem l'usuari a la UO d'inactius");
         for (UsuariDto usuari : usuarisNoActius) {
             List<Group> grups = gSuiteService.getUserGroups(usuari.getGsuiteEmail());
             for (Group grup : grups) {
@@ -2055,7 +2054,12 @@ public class SincronitzacioController {
                     }
                 }
             }
+        }
 
+        //Els usuaris suspesos també són inactius
+        List<UsuariDto> usuarisNoActiusAll = usuariService.findUsuarisNoActius();
+        log.info("Canviem l'usuari a la UO d'inactius");
+        for (UsuariDto usuari : usuarisNoActiusAll) {
             if(usuari.getGestibProfessor() != null && usuari.getGestibProfessor()){
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOProfessors);
                 gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOProfessors);
