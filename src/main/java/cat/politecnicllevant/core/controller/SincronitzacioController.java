@@ -632,7 +632,7 @@ public class SincronitzacioController {
                             Long idusuari = u.getIdusuari();
                             UsuariDto alumneOld = alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null);
                             if (!this.usuariTeGrup(alumneOld, grup) && u.getGsuiteEmail() != null) {
-                                String infoAlumne = "L'alumne " + u.getGsuiteEmail() + " ha canviat de grup.";
+                                String infoAlumne = "L'alumne " + u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") ha canviat de grup.";
 
                                 GrupDto grupOld = null;
                                 if (alumneOld != null) {
@@ -661,14 +661,14 @@ public class SincronitzacioController {
                             if (u != null) {
                                 //Si estava inactiu i ara passa a actiu
                                 if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
-                                    resultat.add("L'alumne " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
+                                    resultat.add("L'alumne "+ u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") passa d'inactiu a actiu");
                                 }
 
                                 //Si ha canviat de grup l'actualitzem
                                 Long idusuari = u.getIdusuari();
                                 UsuariDto alumneOld = alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null);
                                 if (!this.usuariTeGrup(alumneOld, grup) && u.getGsuiteEmail() != null) {
-                                    String infoAlumne = "L'alumne " + u.getGsuiteEmail() + " ha canviat de grup.";
+                                    String infoAlumne = "L'alumne "+ u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") ha canviat de grup.";
 
                                     GrupDto grupOld = null;
                                     if (alumneOld != null) {
