@@ -59,7 +59,7 @@ public class GSuiteService {
         return getUsers(0);
     }
 
-    public List<User> getUsers(int retry) throws InterruptedException {
+    private List<User> getUsers(int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -114,7 +114,7 @@ public class GSuiteService {
         return getUserById(id, 0);
     }
 
-    public User getUserById(String id, int retry) throws InterruptedException {
+    private User getUserById(String id, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -139,7 +139,7 @@ public class GSuiteService {
         return createUser(email, nom, cognoms, personalID, unitatOrganitzativa, 0);
     }
 
-    public User createUser(String email, String nom, String cognoms, String personalID, String unitatOrganitzativa, int retry) throws InterruptedException {
+    private User createUser(String email, String nom, String cognoms, String personalID, String unitatOrganitzativa, int retry) throws InterruptedException {
 
         if (!EmailValidator.getInstance().isValid(email)) {
             return null;
@@ -191,7 +191,7 @@ public class GSuiteService {
         return updateUser(email, nom, cognoms, personalID, unitatOrganitzativa, 0);
     }
 
-    public User updateUser(String email, String nom, String cognoms, String personalID, String unitatOrganitzativa, int retry) throws InterruptedException {
+    private User updateUser(String email, String nom, String cognoms, String personalID, String unitatOrganitzativa, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
             GoogleCredentials credentials = null;
@@ -243,7 +243,7 @@ public class GSuiteService {
         return suspendreUser(email, suspes, 0);
     }
 
-    public User suspendreUser(String email, boolean suspes, int retry) throws InterruptedException {
+    private User suspendreUser(String email, boolean suspes, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -273,7 +273,7 @@ public class GSuiteService {
         return resetPassword(email, password, 0);
     }
 
-    public User resetPassword(String email, String password, int retry) throws InterruptedException {
+    private User resetPassword(String email, String password, int retry) throws InterruptedException {
         try {
             log.info("Reset " + email + " amb el password " + password);
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
@@ -308,7 +308,7 @@ public class GSuiteService {
         return getGroups(0);
     }
 
-    public List<Group> getGroups(int retry) throws InterruptedException {
+    private List<Group> getGroups(int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -356,7 +356,7 @@ public class GSuiteService {
         return getGroupById(idgrup, 0);
     }
 
-    public Group getGroupById(String idgrup, int retry) throws InterruptedException {
+    private Group getGroupById(String idgrup, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -384,7 +384,7 @@ public class GSuiteService {
         return getMembers(group, 0);
     }
 
-    public List<Member> getMembers(String group, int retry) throws InterruptedException {
+    private List<Member> getMembers(String group, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -432,7 +432,7 @@ public class GSuiteService {
         return getUserGroups(emailUser, 0);
     }
 
-    public List<Group> getUserGroups(String emailUser, int retry) throws InterruptedException {
+    private List<Group> getUserGroups(String emailUser, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -485,7 +485,7 @@ public class GSuiteService {
         deleteMember(emailUser, emailGrup, 0);
     }
 
-    public void deleteMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
+    private void deleteMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
         if (emailUser == null) {
             log.error("Error eliminant l'usuari. Email d'usuari null");
         } else if (emailGrup == null) {
@@ -519,7 +519,7 @@ public class GSuiteService {
         createMember(emailUser, emailGrup, 0);
     }
 
-    public void createMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
+    private void createMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = null;
@@ -550,7 +550,7 @@ public class GSuiteService {
         return createGroup(email, nom, descripcio, 0);
     }
 
-    public Group createGroup(String email, String nom, String descripcio, int retry) throws InterruptedException {
+    private Group createGroup(String email, String nom, String descripcio, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
@@ -581,7 +581,7 @@ public class GSuiteService {
         return updateGroup(email, nom, descripcio, 0);
     }
 
-    public Group updateGroup(String email, String nom, String descripcio, int retry) throws InterruptedException {
+    private Group updateGroup(String email, String nom, String descripcio, int retry) throws InterruptedException {
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
