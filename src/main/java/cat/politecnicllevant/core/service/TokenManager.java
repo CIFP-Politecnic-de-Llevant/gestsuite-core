@@ -20,10 +20,11 @@ public class TokenManager {
     private String jwtSecret;
 
 
-    public String createToken(String email, List<String> rols) {
+    public String createToken(String email, List<String> rols, String nom) {
         return Jwts.builder()
                 .claim("email", email)
                 .claim("rols",rols)
+                .claim("nom",nom)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000 * 24 * 7)) //1 setmana
                 .signWith(SignatureAlgorithm.HS256, Base64.getEncoder().encodeToString(this.jwtSecret.getBytes()))

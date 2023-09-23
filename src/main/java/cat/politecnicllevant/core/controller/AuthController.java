@@ -97,7 +97,7 @@ public class AuthController {
                         .domain("localhost")
                         .build();
 
-                String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()));
+                String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()),name);
                 return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(tokenGenerated);
 
             } else{
@@ -109,7 +109,7 @@ public class AuthController {
                     Set<RolDto> rols = new HashSet<>();
                     rols.add(RolDto.ADMINISTRADOR);
 
-                    ResponseEntity responseEntity = new ResponseEntity<>(tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList())), HttpStatus.OK);
+                    ResponseEntity responseEntity = new ResponseEntity<>(tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()),name), HttpStatus.OK);
 
                     ResponseCookie resCookie = ResponseCookie.from("hola", "adeu")
                             .httpOnly(true)
@@ -119,7 +119,7 @@ public class AuthController {
                             .domain("localhost")
                             .build();
 
-                    String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()));
+                    String tokenGenerated = tokenManager.createToken(email,rols.stream().map(Enum::toString).collect(Collectors.toList()),name);
                     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(tokenGenerated);
                 }
             }
