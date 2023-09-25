@@ -395,8 +395,11 @@ public class SincronitzacioController {
         CentreDto centre = centres.get(0);
 
         if (centre.getSincronitzar()) {
+            centre.setSincronitzant(true);
+            centreService.save(centre);
+
             List<String> logSimulacio = new ArrayList<>();
-            logSimulacio.add("Resultat sincronització v. 2.5");
+            logSimulacio.add("Resultat sincronització v. 3.0");
             logSimulacio.addAll(this.simular());
 
             List<UsuariDto> usuarisNoActiusBeforeSync = usuariService.findUsuarisNoActius();
@@ -433,10 +436,14 @@ public class SincronitzacioController {
             this.deleteGrupsCorreuGSuiteToDatabase();
             this.updateGrupsCorreuGSuiteToDatabase();
 
+
             log.info("Actualitació de centre. Sincronització acabada");
             this.updateCentre(centre);
 
             gMailService.sendMessage("Sincronització log", String.join("<br>", logSimulacio), this.adminUser);
+
+            centre.setSincronitzant(false);
+            centreService.save(centre);
         }
     }
 
@@ -1971,6 +1978,14 @@ public class SincronitzacioController {
                                         log.info("Usuari" + usuariGSuite.getPrimaryEmail() + " modificat correctament a GSuite");
                                     } else {
                                         log.error("Error modificant usuari " + usuari.getGsuiteEmail(), "Error modificant usuari " + usuari.getGsuiteEmail(), this.adminUser);
+                                    }
+                                } else if(!usuari.getBloquejaGsuiteUnitatOrganitzativa() && !usuari.getGsuiteUnitatOrganitzativa().equals(rutaUnitat)){
+                                    User usuariGSuite = gSuiteService.updateUser(usuari.getGsuiteEmail(), nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
+
+                                    if (usuariGSuite != null) {
+                                        log.info("Unitat organitzativa usuari" + usuariGSuite.getPrimaryEmail() + " modificat correctament a GSuite");
+                                    } else {
+                                        log.error("Error modificant la unitat organitzativa de l'usuari " + usuari.getGsuiteEmail(), this.adminUser);
                                     }
                                 }
                             }
