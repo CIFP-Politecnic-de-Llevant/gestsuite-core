@@ -55,7 +55,7 @@ public class CentreController {
         return new ResponseEntity<>(this.passwordInicial, HttpStatus.OK);
     }
 
-    @PostMapping("/centre/sincronitzant")
+    @PostMapping("/public/centre/sincronitzant")
     public ResponseEntity<Boolean> isSincronitzant() {
         List<CentreDto> centres = centreService.findAll();
         if(!centres.isEmpty()){
