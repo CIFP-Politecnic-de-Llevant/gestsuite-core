@@ -26,6 +26,9 @@ public @Data class Centre {
     @Column(name = "sincronitzar", nullable = false)
     private Boolean sincronitzar;
 
+    @Column(name = "sincronitzant", nullable = false)
+    private Boolean sincronitzant;
+
     @Column(name = "sincronitza_professors", nullable = false)
     private Boolean sincronitzaProfessors;
 

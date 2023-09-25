@@ -10,6 +10,7 @@ public @Data class CentreDto {
     private String anyAcademic;
     private String nom;
     private Boolean sincronitzar;
+    private Boolean sincronitzant;
     private Boolean sincronitzaProfessors;
     private Boolean sincronitzaAlumnes;
     private LocalDateTime dataSincronitzacio;

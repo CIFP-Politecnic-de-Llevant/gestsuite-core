@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
 
 @RestController
 public class CentreController {
@@ -43,15 +44,24 @@ public class CentreController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
-    @GetMapping("/centre/{id}")
+    /*@GetMapping("/centre/{id}")
     public ResponseEntity<CentreDto> getCentreByIdentificador(@PathVariable("id") String identificador) {
         CentreDto p = centreService.findByIdentificador(identificador);
         return new ResponseEntity<>(p, HttpStatus.OK);
-    }
+    }*/
 
     @GetMapping("/centre/password-inicial")
     public ResponseEntity<String> getPasswordInicial() {
         return new ResponseEntity<>(this.passwordInicial, HttpStatus.OK);
+    }
+
+    @PostMapping("/centre/sincronitzant")
+    public ResponseEntity<Boolean> isSincronitzant() {
+        List<CentreDto> centres = centreService.findAll();
+        if(!centres.isEmpty()){
+            return new ResponseEntity<>(centres.get(0).getSincronitzant(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(false, HttpStatus.OK);
     }
 
 }
