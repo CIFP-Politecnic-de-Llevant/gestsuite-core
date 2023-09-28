@@ -62,7 +62,7 @@ public class AdministradorController {
         second, minute, hour, day(1-31), month(1-12), weekday(1-7) SUN-SAT
         0 0 1 * * * = a les 1AM de cada dia
     */
-    @Scheduled(cron = "0 0 1 * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void backupDatabase() throws InterruptedException, IOException, GeneralSecurityException {
         LocalDate localDate = LocalDate.now();
         String today = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));

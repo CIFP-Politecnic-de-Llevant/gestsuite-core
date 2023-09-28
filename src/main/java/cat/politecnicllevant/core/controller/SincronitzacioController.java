@@ -388,7 +388,7 @@ public class SincronitzacioController {
     second, minute, hour, day(1-31), month(1-12), weekday(1-7) SUN-SAT
     0 0 2 * * * = a les 2AM de cada dia
      */
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 1 * * *")
     @PostMapping("/sync/sincronitza")
     public void sincronitzar() throws MessagingException, GeneralSecurityException, IOException, InterruptedException {
         List<CentreDto> centres = centreService.findAll();
