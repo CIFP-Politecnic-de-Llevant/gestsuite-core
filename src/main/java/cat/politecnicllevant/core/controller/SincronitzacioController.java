@@ -720,7 +720,17 @@ public class SincronitzacioController {
                 }
                 for (UsuariDto alumne : allAlumnes) {
                     if (alumne.getActiu()) {
-                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + " s'ha eliminat.");
+                        String grupAlumne = "Grup: ";
+                        if(alumne.getGestibGrup()!= null && !alumne.getGestibGrup().isEmpty()){
+                            grupAlumne += grupService.findByGestibIdentificador(alumne.getGestibGrup());
+                        }
+                        if(alumne.getGestibGrup2()!= null && !alumne.getGestibGrup2().isEmpty()){
+                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup2());
+                        }
+                        if(alumne.getGestibGrup3()!= null && !alumne.getGestibGrup3().isEmpty()){
+                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup3());
+                        }
+                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "("+grupAlumne+") s'ha eliminat.");
                     }
                 }
             }
