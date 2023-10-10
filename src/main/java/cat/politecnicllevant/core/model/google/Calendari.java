@@ -16,10 +16,6 @@ public @Data class Calendari {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idcalendari;
 
-    @Column(name = "tipus", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CalendariTipus calendariTipus;
-
     /* GSUITE */
     @Column(name = "gsuite_email", nullable = true, length = 1024)
     private String gsuiteEmail;

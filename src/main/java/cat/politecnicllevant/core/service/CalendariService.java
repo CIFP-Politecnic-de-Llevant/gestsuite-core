@@ -1,9 +1,7 @@
 package cat.politecnicllevant.core.service;
 
 import cat.politecnicllevant.core.dto.google.CalendariDto;
-import cat.politecnicllevant.core.dto.google.CalendariTipusDto;
 import cat.politecnicllevant.core.model.google.Calendari;
-import cat.politecnicllevant.core.model.google.CalendariTipus;
 import cat.politecnicllevant.core.repository.google.CalendariRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +26,13 @@ public class CalendariService {
     }
 
     @Transactional
-    public CalendariDto save(String email, String nom, String descripcio, String grup, CalendariTipusDto calendariTipusDto) {
+    public CalendariDto save(String email, String nom, String descripcio, String grup) {
         ModelMapper modelMapper = new ModelMapper();
-        CalendariTipus calendariTipus = modelMapper.map(calendariTipusDto,CalendariTipus.class);
 
         Calendari c = new Calendari();
         c.setGsuiteEmail(email);
         c.setGsuiteNom(nom);
         c.setGsuiteDescripcio(descripcio);
-        c.setCalendariTipus(calendariTipus);
 
         Calendari calendariSaved = calendariRepository.save(c);
 

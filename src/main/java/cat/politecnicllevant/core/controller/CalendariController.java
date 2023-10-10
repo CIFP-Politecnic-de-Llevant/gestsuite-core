@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +54,7 @@ public class CalendariController {
 
             if (calendari == null) {
                 //Creem el calendari a la BBDD
-                calendariService.save(calendariGSuite.getResourceEmail(), calendariGSuite.getResourceName(), calendariGSuite.getResourceDescription(), null, CalendariTipusDto.GENERAL);
+                calendariService.save(calendariGSuite.getResourceEmail(), calendariGSuite.getResourceName(), calendariGSuite.getResourceDescription(), null);
             }
         }
 
@@ -63,7 +64,7 @@ public class CalendariController {
     }
 
     @GetMapping("calendari/findByEmail/{email}")
-    public ResponseEntity<CalendariDto> getCalendariByEmail(@PathVariable("email") String email) throws InterruptedException, GeneralSecurityException, IOException {
+    public ResponseEntity<CalendariDto> getCalendariByEmail(@PathVariable("email") String email) throws GeneralSecurityException, IOException {
         CalendariDto calendari = calendariService.findByEmail(email);
 
         List<UsuariDto> usuaris = usuariService.findAll();
@@ -112,4 +113,25 @@ public class CalendariController {
         return new ResponseEntity<>(calendari, HttpStatus.OK);
     }
 
+    @PostMapping("/calendari/sync")
+    public void sincronitzaCalendaris(){
+        List<CalendariDto> calendaris = calendariService.findAll();
+
+        for(CalendariDto calendariDto: calendaris){
+            System.out.println(calendariDto.getGsuiteNom());
+            for(GrupCorreuDto grupCorreuDto: calendariDto.getGrupCorreuEdicio()){
+                gSuiteService.insertUserCalendar(grupCorreuDto.getGsuiteEmail(),calendariDto.getGsuiteEmail(),CalendariRolDto.LECTOR_ESCRIPTOR,CalendariTipusUsuariDto.USUARI);
+            }
+            for(GrupCorreuDto grupCorreuDto: calendariDto.getGrupCorreuLectura()){
+                gSuiteService.insertUserCalendar(grupCorreuDto.getGsuiteEmail(),calendariDto.getGsuiteEmail(),CalendariRolDto.LECTOR,CalendariTipusUsuariDto.USUARI);
+            }
+            for(UsuariDto usuariDto: calendariDto.getUsuarisEdicio()){
+                gSuiteService.insertUserCalendar(usuariDto.getGsuiteEmail(),calendariDto.getGsuiteEmail(),CalendariRolDto.LECTOR_ESCRIPTOR,CalendariTipusUsuariDto.USUARI);
+            }
+            for(UsuariDto usuariDto: calendariDto.getUsuarisLectura()){
+                gSuiteService.insertUserCalendar(usuariDto.getGsuiteEmail(),calendariDto.getGsuiteEmail(),CalendariRolDto.LECTOR,CalendariTipusUsuariDto.USUARI);
+            }
+        }
+
+    }
 }

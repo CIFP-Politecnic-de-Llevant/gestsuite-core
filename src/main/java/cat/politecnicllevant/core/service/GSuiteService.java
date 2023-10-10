@@ -1,5 +1,7 @@
 package cat.politecnicllevant.core.service;
 
+import cat.politecnicllevant.core.dto.google.CalendariRolDto;
+import cat.politecnicllevant.core.dto.google.CalendariTipusUsuariDto;
 import cat.politecnicllevant.core.model.gestib.Usuari;
 import cat.politecnicllevant.core.repository.gestib.UsuariRepository;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -657,14 +659,14 @@ public class GSuiteService {
 
         Acl acl = service.acl().list(emailCalendar).execute();
 
-        /*for (AclRule rule : acl.getItems()) {
+        for (AclRule rule : acl.getItems()) {
             System.out.println(rule.getId() + ": " + rule.getRole()+"::"+rule.getScope().getValue()+"::"+rule.getScope().getType());
-        }*/
+        }
 
         return acl.getItems();
     }
 
-    public void insertUserCalendar(String emailUser, String emailCalendar) {
+    public void insertUserCalendar(String emailUser, String emailCalendar, CalendariRolDto rol, CalendariTipusUsuariDto tipusUsuari) {
         try {
             String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
             GoogleCredentials credentials = null;
@@ -678,16 +680,51 @@ public class GSuiteService {
             Calendar service = new Calendar.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
 
             AclRule.Scope scope = new AclRule.Scope();
-            scope.setType("user");
+            scope.setType(tipusUsuari.getTipus());
             scope.setValue(emailUser);
 
             AclRule aclRule = new AclRule();
-            aclRule.setRole("reader");
+            aclRule.setRole(rol.getRol());
             aclRule.setScope(scope);
 
-            service.acl().insert(emailCalendar, aclRule).execute();
+            AclRule aclRuleExist = service.acl().get(emailCalendar, rol.getRol()).execute();
 
-            System.out.println("S'ha afegit l'usuari " + emailUser + " al calendari " + emailCalendar);
+            //Inserim només si no existeix previament
+            if(aclRuleExist==null) {
+                service.acl().insert(emailCalendar, aclRule).execute();
+            }
+
+            System.out.println("S'ha afegit l'usuari " + emailUser + " al calendari " + emailCalendar+" amb el rol "+rol.getRol());
+        } catch (IOException | GeneralSecurityException e) {
+            System.out.println("email: " + emailUser + " calendari: " + emailCalendar + " error: " + e.getMessage());
+        }
+    }
+
+    public void removeUserCalendar(String emailUser, String emailCalendar) {
+        try {
+            String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
+            GoogleCredentials credentials = null;
+
+            credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+
+            HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+
+            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
+
+            AclRule aclRuleReader = service.acl().get(emailCalendar, "reader").execute();
+            AclRule aclRuleWriter = service.acl().get(emailCalendar, "writer").execute();
+
+            if(aclRuleReader!=null) {
+                service.acl().delete(emailCalendar, "reader").execute();
+            }
+
+            if(aclRuleWriter!=null) {
+                service.acl().delete(emailCalendar, "writer").execute();
+            }
+
+            System.out.println("S'ha eliminat l'usuari " + emailUser + " del calendari " + emailCalendar);
         } catch (IOException | GeneralSecurityException e) {
             System.out.println("email: " + emailUser + " calendari: " + emailCalendar + " error: " + e.getMessage());
         }

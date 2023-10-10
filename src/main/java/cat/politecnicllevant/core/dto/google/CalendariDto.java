@@ -9,7 +9,6 @@ import java.util.Set;
 
 public @Data class CalendariDto {
     private Long idcalendari;
-    private CalendariTipusDto calendariTipus;
     private String gsuiteEmail;
     private String gsuiteNom;
     private String gsuiteDescripcio;
