@@ -626,23 +626,25 @@ public class GSuiteService {
 
 
         //Resultat
-        List<CalendarResource> result = new ArrayList<>();
-        result.addAll(calendaris);
+        if(calendaris!=null) {
+            List<CalendarResource> result = new ArrayList<>(calendaris);
 
-        while (pageToken != null) {
-            CalendarResources query2 = service.resources().calendars().list(this.adminUser)
-                    .setPageToken(pageToken)
-                    .execute();
+            while (pageToken != null) {
+                CalendarResources query2 = service.resources().calendars().list(this.adminUser)
+                        .setPageToken(pageToken)
+                        .execute();
 
-            List<CalendarResource> calendaris2 = query2.getItems();
-            pageToken = query2.getNextPageToken();
+                List<CalendarResource> calendaris2 = query2.getItems();
+                pageToken = query2.getNextPageToken();
 
-            if(calendaris2!=null) {
-                result.addAll(calendaris2);
+                if (calendaris2 != null) {
+                    result.addAll(calendaris2);
+                }
             }
-        }
 
-        return result;
+            return result;
+        }
+        return null;
     }
 
     public List<AclRule> getUsersByCalendar(String emailCalendar) throws IOException, GeneralSecurityException {

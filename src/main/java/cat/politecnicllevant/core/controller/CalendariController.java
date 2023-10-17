@@ -48,13 +48,15 @@ public class CalendariController {
          */
         List<CalendarResource> calendarisGSuite = gSuiteService.getCalendars();
 
-        for (CalendarResource calendariGSuite : calendarisGSuite) {
+        if(calendarisGSuite != null) {
+            for (CalendarResource calendariGSuite : calendarisGSuite) {
 
-            CalendariDto calendari = calendariService.findByEmail(calendariGSuite.getResourceEmail());
+                CalendariDto calendari = calendariService.findByEmail(calendariGSuite.getResourceEmail());
 
-            if (calendari == null) {
-                //Creem el calendari a la BBDD
-                calendariService.save(calendariGSuite.getResourceEmail(), calendariGSuite.getResourceName(), calendariGSuite.getResourceDescription(), null);
+                if (calendari == null) {
+                    //Creem el calendari a la BBDD
+                    calendariService.save(calendariGSuite.getResourceEmail(), calendariGSuite.getResourceName(), calendariGSuite.getResourceDescription(), null);
+                }
             }
         }
 
