@@ -8,6 +8,7 @@ import cat.politecnicllevant.core.service.GSuiteService;
 import cat.politecnicllevant.core.service.GrupCorreuService;
 import cat.politecnicllevant.core.service.UsuariService;
 import com.google.api.services.calendar.model.AclRule;
+import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.directory.model.CalendarResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,24 +42,7 @@ public class CalendariController {
 
     @GetMapping("/calendari/llistat")
     public ResponseEntity<List<CalendariDto>> getCalendaris(HttpServletRequest request) throws GeneralSecurityException, IOException {
-        /*
-        Sincronització GSuite -> BBDD
-        Si el grup NO existeix creem el grup a la BBDD i associem els usuaris
-        Si el grup SI existeix actualitzem els membres de la BBDD
-         */
-        List<CalendarResource> calendarisGSuite = gSuiteService.getCalendars();
-
-        if(calendarisGSuite != null) {
-            for (CalendarResource calendariGSuite : calendarisGSuite) {
-
-                CalendariDto calendari = calendariService.findByEmail(calendariGSuite.getResourceEmail());
-
-                if (calendari == null) {
-                    //Creem el calendari a la BBDD
-                    calendariService.save(calendariGSuite.getResourceEmail(), calendariGSuite.getResourceName(), calendariGSuite.getResourceDescription(), null);
-                }
-            }
-        }
+        //Només mostrem els calendaris de la BBDD per no mostrar cap calendari personal, només els que ens interessen.
 
         List<CalendariDto> calendaris = calendariService.findAll();
 

@@ -13,6 +13,7 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.Acl;
 import com.google.api.services.calendar.model.AclRule;
+import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.directory.Directory;
 import com.google.api.services.directory.DirectoryScopes;
 import com.google.api.services.directory.model.*;
@@ -611,41 +612,32 @@ public class GSuiteService {
 
 
     //CALENDARIS
-    public List<CalendarResource> getCalendars() throws GeneralSecurityException, IOException {
-        String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_RESOURCE_CALENDAR, DirectoryScopes.ADMIN_DIRECTORY_RESOURCE_CALENDAR_READONLY};
-        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+    /*public List<CalendarListEntry> getCalendars() throws IOException, GeneralSecurityException {
+        String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
+        GoogleCredentials credentials = null;
+
+        credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+
         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
 
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-        Directory service = new Directory.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
+        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
 
-        CalendarResources query = service.resources().calendars().list("my_customer").execute();
-        List<CalendarResource> calendaris = query.getItems();
-        String pageToken = query.getNextPageToken();
+        List<CalendarListEntry> calendarListEntries = service.calendarList().list().execute().getItems();
 
+        for(CalendarListEntry calendarListEntry : calendarListEntries) {
+            System.out.println(calendarListEntry.getId()+"::"+calendarListEntry.getSummary());
+            Acl acl = service.acl().list(calendarListEntry.getId()).execute();
 
-        //Resultat
-        if(calendaris!=null) {
-            List<CalendarResource> result = new ArrayList<>(calendaris);
-
-            while (pageToken != null) {
-                CalendarResources query2 = service.resources().calendars().list(this.adminUser)
-                        .setPageToken(pageToken)
-                        .execute();
-
-                List<CalendarResource> calendaris2 = query2.getItems();
-                pageToken = query2.getNextPageToken();
-
-                if (calendaris2 != null) {
-                    result.addAll(calendaris2);
-                }
+            for (AclRule rule : acl.getItems()) {
+                System.out.println(rule.getId() + ": " + rule.getRole()+"::"+rule.getScope().getValue()+"::"+rule.getScope().getType());
             }
-
-            return result;
         }
-        return null;
-    }
+
+        return new ArrayList<>();
+    }*/
+
 
     public List<AclRule> getUsersByCalendar(String emailCalendar) throws IOException, GeneralSecurityException {
         String[] scopes = {CalendarScopes.CALENDAR, CalendarScopes.CALENDAR_READONLY};
