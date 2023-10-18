@@ -677,8 +677,6 @@ public class GSuiteService {
 
             com.google.api.services.calendar.model.Calendar calendar = service.calendars().get(emailCalendar).execute();
 
-            System.out.println("Calendari trobat: "+calendar.getId()+"::"+calendar.getSummary());
-            System.out.println(rol.getRol()+"---"+tipusUsuari.getTipus());
 
             AclRule.Scope scope = new AclRule.Scope();
             scope.setType(tipusUsuari.getTipus());
