@@ -673,6 +673,8 @@ public class GSuiteService {
 
             Calendar service = new Calendar.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
 
+            com.google.api.services.calendar.model.Calendar calendarGoogle = service.calendars().get(emailCalendar).execute();
+
             AclRule.Scope scope = new AclRule.Scope();
             scope.setType(tipusUsuari.getTipus());
             scope.setValue(emailUser);
@@ -681,11 +683,11 @@ public class GSuiteService {
             aclRule.setRole(rol.getRol());
             aclRule.setScope(scope);
 
-            AclRule aclRuleExist = service.acl().get(emailCalendar, rol.getRol()).execute();
+            AclRule aclRuleExist = service.acl().get(calendarGoogle.getId(), rol.getRol()).execute();
 
             //Inserim només si no existeix previament
             if(aclRuleExist==null) {
-                service.acl().insert(emailCalendar, aclRule).execute();
+                service.acl().insert(calendarGoogle.getId(), aclRule).execute();
             }
 
             System.out.println("S'ha afegit l'usuari " + emailUser + " al calendari " + emailCalendar+" amb el rol "+rol.getRol());
