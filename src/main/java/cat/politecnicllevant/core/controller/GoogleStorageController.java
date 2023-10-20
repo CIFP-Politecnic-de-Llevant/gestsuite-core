@@ -49,7 +49,7 @@ public class GoogleStorageController {
         return new ResponseEntity<>(fitxerBucketDto, HttpStatus.OK);
     }
 
-    @PostMapping(value="/googlestorage/uploadobjectfile", consumes = "multipart/form-data")
+    @PostMapping(value="/googlestorage/uploadobjectfile", headers = {"Content: multipart/form-data"})
     public ResponseEntity<FitxerBucketDto> uploadObjectFile(@RequestParam("objectName") String objectName, @RequestParam("bucket") String bucket, @RequestPart(value = "file") final File uploadfile) throws IOException, GeneralSecurityException {
         InputStream is = new FileInputStream(uploadfile);
 
