@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,29 +49,6 @@ public class GoogleStorageController {
     @PostMapping("/googlestorage/uploadobject")
     public ResponseEntity<FitxerBucketDto> uploadObject(@RequestParam("objectName") String objectName, @RequestParam("filePath") String filePath, @RequestParam("bucket") String bucket) throws IOException, GeneralSecurityException{
         FitxerBucketDto fitxerBucketDto = googleStorageService.uploadObject(objectName, filePath, bucket);
-        return new ResponseEntity<>(fitxerBucketDto, HttpStatus.OK);
-    }
-
-    @PostMapping(value="/googlestorage/uploadobjectfile", headers = {"Content: multipart/form-data"})
-    public ResponseEntity<FitxerBucketDto> uploadObjectFile(@RequestParam("objectName") String objectName, @RequestParam("bucket") String bucket, @RequestPart(value = "file") final File uploadfile) throws IOException, GeneralSecurityException {
-        InputStream is = new FileInputStream(uploadfile);
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] readBuf = new byte[4096];
-        while (is.available() > 0) {
-            int bytesRead = is.read(readBuf);
-            os.write(readBuf, 0, bytesRead);
-        }
-
-        // Passam l'arxiu a dins una carpeta
-        String fileName = "/tmp/"+uploadfile.getName();
-
-        OutputStream outputStream = new FileOutputStream(fileName);
-        os.writeTo(outputStream);
-
-        File f = new File(fileName);
-
-        FitxerBucketDto fitxerBucketDto = googleStorageService.uploadObject(objectName, f.getAbsolutePath(), bucket);
         return new ResponseEntity<>(fitxerBucketDto, HttpStatus.OK);
     }
 
