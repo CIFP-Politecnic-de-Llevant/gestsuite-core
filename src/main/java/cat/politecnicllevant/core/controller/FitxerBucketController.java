@@ -2,6 +2,7 @@ package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.core.dto.google.FitxerBucketDto;
 import cat.politecnicllevant.core.service.FitxerBucketService;
+import feign.Headers;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,12 +48,6 @@ public class FitxerBucketController {
 
     @PostMapping("/public/fitxerbucket/uploadlocal")
     public ResponseEntity<String> handleFileUpload(@RequestPart(value = "file") final MultipartFile uploadfile) throws IOException {
-        String path = saveUploadedFiles(uploadfile);
-        return new ResponseEntity<>(path, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/public/fitxerbucket/uploadlocal2",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> handleFileUpload2(@RequestPart(value = "file") final File uploadfile) throws IOException {
         String path = saveUploadedFiles(uploadfile);
         return new ResponseEntity<>(path, HttpStatus.OK);
     }
