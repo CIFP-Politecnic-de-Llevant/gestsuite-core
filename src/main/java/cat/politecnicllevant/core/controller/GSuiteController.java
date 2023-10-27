@@ -241,6 +241,12 @@ public class GSuiteController {
         //gMailService.sendMessage(assumpte,bodyHTML,to);
     }
 
+    @PostMapping(value="/gsuite/sendemailattachment-path")
+    public void sendEmailAttachmentPath(@RequestParam("to") String to, @RequestParam("assumpte") String assumpte, @RequestParam("body") String bodyHTML, @RequestParam("path") String filepath) throws IOException, MessagingException, GeneralSecurityException {
+        File file = new File(filepath);
+        this.sendEmail(to,assumpte,bodyHTML,file);
+    }
+
 /*
     @PostMapping("/auth/samplenotification")
     public ResponseEntity<Notificacio> sampleNotification() throws InterruptedException {
