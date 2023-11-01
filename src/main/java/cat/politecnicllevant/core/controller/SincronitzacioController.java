@@ -596,7 +596,7 @@ public class SincronitzacioController {
                 }
                 for (UsuariDto professor : allProfessors) {
                     if (professor.getActiu()) {
-                        resultat.add("El professor " + professor.getGestibNom() + " " + professor.getGestibCognom1() + " " + professor.getGestibCognom2() + " s'ha eliminat.");
+                        resultat.add("El professor " + professor.getGestibNom() + " " + professor.getGestibCognom1() + " " + professor.getGestibCognom2() + " s'ha marcat com INACTIU.");
                     }
                 }
             }
@@ -722,15 +722,15 @@ public class SincronitzacioController {
                     if (alumne.getActiu()) {
                         String grupAlumne = "Grup: ";
                         if(alumne.getGestibGrup()!= null && !alumne.getGestibGrup().isEmpty()){
-                            grupAlumne += grupService.findByGestibIdentificador(alumne.getGestibGrup());
+                            grupAlumne += grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibNom();
                         }
                         if(alumne.getGestibGrup2()!= null && !alumne.getGestibGrup2().isEmpty()){
-                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup2());
+                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibNom();
                         }
                         if(alumne.getGestibGrup3()!= null && !alumne.getGestibGrup3().isEmpty()){
-                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup3());
+                            grupAlumne += " - " + grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibNom();
                         }
-                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "("+grupAlumne+") s'ha eliminat.");
+                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "("+grupAlumne+") s'ha marcat com INACTIU.");
                     }
                 }
             }
