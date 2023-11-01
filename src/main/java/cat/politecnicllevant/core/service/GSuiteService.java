@@ -212,19 +212,24 @@ public class GSuiteService {
             userName.setFamilyName(cognoms);
             userName.setFullName(nom + " " + cognoms);
 
-            ArrayMap userKey = new ArrayMap();
-            userKey.set(0, "value", personalID);
-            userKey.set(1, "type", "organization");
+            List<ArrayMap> externalIds = new ArrayList<>();
 
-            List<ArrayMap> list = new ArrayList<>();
-            list.add(userKey);
+            if(personalID!=null && !personalID.isEmpty()) {
+                ArrayMap userKey = new ArrayMap();
+                userKey.set(0, "value", personalID);
+                userKey.set(1, "type", "organization");
+
+                externalIds.add(userKey);
+            }
 
             Usuari usuari = usuariRepository.findUsuariByGsuiteEmail(email);
 
             if (usuari != null) {
                 User u = service.users().get(email).execute();
                 u.setName(userName);
-                u.setExternalIds(list);
+                if(!externalIds.isEmpty()) {
+                    u.setExternalIds(externalIds);
+                }
                 u.setPrimaryEmail(usuari.getGsuiteEmail());
                 u.setOrgUnitPath(unitatOrganitzativa);
 
