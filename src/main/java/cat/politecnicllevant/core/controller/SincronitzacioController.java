@@ -491,7 +491,7 @@ public class SincronitzacioController {
 
 
             //Cursos i Grups
-            resultat.add("CURSOS I GRUPS");
+            resultat.add("<h3>CURSOS I GRUPS</h3>");
             resultat.add("");
 
             NodeList nodesCurs = doc.getElementsByTagName("CURS");
@@ -539,7 +539,7 @@ public class SincronitzacioController {
 
             //Professors
             if (centre.getSincronitzaProfessors()) {
-                resultat.add("PROFESSORAT");
+                resultat.add("<h3>PROFESSORAT</h3>");
                 resultat.add("");
 
                 NodeList nodesProfessor = doc.getElementsByTagName("PROFESSOR");
@@ -603,7 +603,7 @@ public class SincronitzacioController {
 
             //Alumnes
             if (centre.getSincronitzaAlumnes()) {
-                resultat.add("ALUMNAT");
+                resultat.add("<h3>ALUMNAT</h3>");
                 resultat.add("");
 
                 //Esborrem els grups, els tornarem a calcular
@@ -737,7 +737,7 @@ public class SincronitzacioController {
 
 
             //Departaments
-            resultat.add("DEPARTAMENTS");
+            resultat.add("<h3>DEPARTAMENTS</h3>");
             resultat.add("");
 
             NodeList nodesDepartament = doc.getElementsByTagName("DEPARTAMENT");
@@ -757,7 +757,7 @@ public class SincronitzacioController {
             }
 
             //Activitats
-            resultat.add("ACTIVITATS");
+            resultat.add("<h3>ACTIVITATS</h3>");
             resultat.add("");
 
             NodeList nodesActivitat = doc.getElementsByTagName("ACTIVITAT");
@@ -786,7 +786,7 @@ public class SincronitzacioController {
                     curta="BG-A"
                 />
              */
-            resultat.add("SUBMATÈRIES");
+            resultat.add("<h3>SUBMATÈRIES</h3>");
             resultat.add("");
 
             NodeList nodesSubmateria = doc.getElementsByTagName("SUBMATERIA");
@@ -812,7 +812,7 @@ public class SincronitzacioController {
 
 
             //Gsuite
-            resultat.add("SINCRONITZACIÓ AMB GSUITE");
+            resultat.add("<h3>SINCRONITZACIÓ AMB GSUITE</h3>");
             resultat.add("");
 
             List<User> gsuiteUsers = gSuiteService.getUsers();
