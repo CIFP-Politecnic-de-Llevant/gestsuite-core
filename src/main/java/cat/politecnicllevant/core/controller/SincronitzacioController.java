@@ -1784,6 +1784,25 @@ public class SincronitzacioController {
 
         for (UsuariDto usuari : professors) {
             if (usuari.getGestibProfessor() && usuari.getActiu()) {
+
+                String nom = usuari.getGsuiteGivenName();
+                String cognoms = usuari.getGsuiteFamilyName();
+
+                if(nom==null || nom.isEmpty()) {
+                    nom = usuari.getGestibNom();
+                }
+
+                if(cognoms==null || cognoms.isEmpty()) {
+                    cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                }
+
+                if (formatNomGSuiteProfessors.equals("nomcognom1cognom2")) {
+                    nom = UtilService.capitalize(nom);
+                    cognoms = UtilService.capitalize(cognoms);
+                }
+
+                gSuiteService.updateUser(usuari.getGsuiteEmail(), nom, cognoms, usuari.getGestibCodi(), this.defaultUOProfessors);
+
                 log.info("Reassignant grups usuari: " + usuari.getGsuiteEmail() + " - " + usuari.getIdusuari());
 
                 List<Group> grupsProfessorOld = gSuiteService.getUserGroups(usuari.getGsuiteEmail());
