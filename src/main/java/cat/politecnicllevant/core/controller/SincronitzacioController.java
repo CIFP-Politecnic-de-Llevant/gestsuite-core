@@ -722,18 +722,18 @@ public class SincronitzacioController {
                     if (alumne.getActiu()) {
                         String grupAlumne = "Grup: ";
                         if(alumne.getGestibGrup()!= null && !alumne.getGestibGrup().isEmpty()){
-                            String idCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibCurs();
-                            grupAlumne += cursService.findByGestibIdentificador(idCurs).getGestibNom();
+                            String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibCurs();
+                            grupAlumne += cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibNom();
                         }
                         if(alumne.getGestibGrup2()!= null && !alumne.getGestibGrup2().isEmpty()){
-                            String idCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibCurs();
-                            grupAlumne += " - " + cursService.findByGestibIdentificador(idCurs).getGestibNom();
+                            String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibCurs();
+                            grupAlumne += " - " + cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibNom();
                         }
                         if(alumne.getGestibGrup3()!= null && !alumne.getGestibGrup3().isEmpty()){
-                            String idCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibCurs();
-                            grupAlumne += " - " + cursService.findByGestibIdentificador(idCurs).getGestibNom();
+                            String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibCurs();
+                            grupAlumne += " - " + cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibNom();
                         }
                         resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "("+grupAlumne+") s'ha marcat com INACTIU.");
