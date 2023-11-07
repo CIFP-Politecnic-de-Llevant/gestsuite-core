@@ -104,9 +104,15 @@ public class GrupCorreuController {
         Si el grup NO existeix creem el grup a la BBDD i associem els usuaris
         Si el grup SI existeix actualitzem els membres de la BBDD
          */
-            Group grup = gSuiteService.getGroupById(idgrup);
-
-            GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(grup.getEmail());
+            Group grup;
+            GrupCorreuDto grupCorreu;
+            try {
+                grup = gSuiteService.getGroupById(idgrup);
+                grupCorreu = grupCorreuService.findByEmail(grup.getEmail());
+            } catch (Exception e){
+                grupCorreu = grupCorreuService.findByEmail(idgrup);
+                grup = gSuiteService.createGroup(idgrup, grupCorreu.getGsuiteNom(), grupCorreu.getGsuiteDescripcio());
+            }
 
             if (grupCorreu == null) {
                 //Creem el grup de correu a la BBDD
