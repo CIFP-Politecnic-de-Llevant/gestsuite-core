@@ -45,15 +45,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GoogleSpreadsheetService {
 
-    @Value("${gc.keyfile}")
-    private String keyFile;
-
-    @Value("${gc.adminUser}")
-    private String adminUser;
-
-    @Value("${gc.nomprojecte}")
-    private String nomProjecte;
-
     @Autowired
     private UsuariRepository usuariRepository;
 
@@ -77,6 +68,15 @@ public class GoogleSpreadsheetService {
 
     @Autowired
     private  SessioRepository sessioRepository;
+
+    @Value("${gc.keyfile}")
+    private String keyFile;
+
+    @Value("${gc.adminUser}")
+    private String adminUser;
+
+    @Value("${gc.nomprojecte}")
+    private String nomProjecte;
 
 
     public void helloSpreadsheets() throws IOException, GeneralSecurityException {
