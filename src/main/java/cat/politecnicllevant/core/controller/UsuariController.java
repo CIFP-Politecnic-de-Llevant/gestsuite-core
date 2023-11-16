@@ -226,6 +226,32 @@ public class UsuariController {
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
+    @GetMapping("/usuaris/profile-by-email/{id}")
+    public ResponseEntity<UsuariDto> getUsuariByEmail(@PathVariable("id") String email, HttpServletRequest request) throws Exception {
+        Claims claims = tokenManager.getClaims(request);
+        String myEmail = (String) claims.get("email");
+
+        System.out.println("email"+email+"myEmail"+myEmail);
+
+        UsuariDto myUser = usuariService.findByEmail(myEmail);
+        UsuariDto usuari = usuariService.findByEmail(email);
+
+        System.out.println("email"+usuari+"myEmail"+myUser);
+
+        //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        if (
+                myEmail.equals(this.adminDeveloper) ||
+                        (
+                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
+                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
+                        )
+        ) {
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
+        } else {
+            throw new Exception("Sense permisos");
+        }
+    }
+
     @PostMapping("/usuari/reset")
     public ResponseEntity<Notificacio> resetPassword(@RequestBody Map<String, String> json) throws GeneralSecurityException, IOException, InterruptedException {
         gSuiteService.resetPassword(json.get("usuari"), this.passwordInicial);
