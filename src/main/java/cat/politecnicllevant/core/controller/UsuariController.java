@@ -2,13 +2,9 @@ package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
-import cat.politecnicllevant.core.dto.gestib.DepartamentDto;
-import cat.politecnicllevant.core.dto.gestib.RolDto;
-import cat.politecnicllevant.core.dto.gestib.UsuariDto;
-import cat.politecnicllevant.core.service.DepartamentService;
-import cat.politecnicllevant.core.service.GSuiteService;
-import cat.politecnicllevant.core.service.TokenManager;
-import cat.politecnicllevant.core.service.UsuariService;
+import cat.politecnicllevant.core.dto.gestib.*;
+import cat.politecnicllevant.core.model.gestib.Curs;
+import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.Group;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +35,21 @@ public class UsuariController {
 
     @Autowired
     private DepartamentService departamentService;
+
+    @Autowired
+    private GrupService grupService;
+
+    @Autowired
+    private CursService cursService;
+
+    @Autowired
+    private SessioService sessioService;
+
+    @Autowired
+    private SubmateriaService submateriaService;
+
+    @Autowired
+    private ActivitatService activitatService;
 
     @Autowired
     private TokenManager tokenManager;
@@ -198,6 +209,63 @@ public class UsuariController {
         } else {
             throw new Exception("Sense permisos");
         }
+    }
+
+    @GetMapping("/usuaris/tutorfct-by-codigrup/{cursgrup}")
+    public ResponseEntity<UsuariDto> getTutorFCTByCodiGrup(@PathVariable("cursgrup") String cursGrup){
+        String codiCurs = cursGrup.substring(0,cursGrup.length()-1);
+        String codiGrup = cursGrup.substring(cursGrup.length()-1);
+
+        System.out.println("Curs: "+codiCurs+" Grup: "+codiGrup);
+
+        UsuariDto tutorFCT = null;
+
+        List<CursDto> cursos = cursService.findByGestibNom(codiCurs);
+        if(cursos!=null && !cursos.isEmpty()){
+            CursDto curs = cursos.get(0);
+            List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup,curs.getGestibIdentificador());
+            GrupDto grup = grups.get(0);
+
+
+
+            List<UsuariDto> professors = usuariService.findProfessors();
+            for (UsuariDto profe : professors) {
+                System.out.println("Usuari:" + profe.getGsuiteFullName() + "Email:" + profe.getGsuiteEmail());
+                List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
+                for (SessioDto sessio : sessions) {
+                    String codiGestibSubmateria = sessio.getGestibSubmateria();
+                    if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
+                        SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
+
+                        if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
+                                (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
+                                && profe.getActiu()
+                                && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
+                        ) {
+                            tutorFCT = profe;
+                            break;
+                        }
+                    }
+                    String codiGestibActivitat = sessio.getGestibActivitat();
+                    if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
+                        ActivitatDto activitat = activitatService.findByGestibIdentificador(codiGestibActivitat);
+
+                        if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
+                                (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
+                                && profe.getActiu()
+                                && (grup.getGestibTutor1().contains(profe.getGestibCodi()) ||
+                                grup.getGestibTutor2().contains(profe.getGestibCodi()) ||
+                                grup.getGestibTutor3().contains(profe.getGestibCodi()))
+                        ) {
+                            tutorFCT = profe;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return new ResponseEntity<>(tutorFCT, HttpStatus.OK);
     }
 
     @GetMapping("/usuaris/profile-by-gestib-codi/{id}")
