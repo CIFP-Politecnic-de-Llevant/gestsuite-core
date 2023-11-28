@@ -1,9 +1,14 @@
 package cat.politecnicllevant.core.service;
 
-import cat.politecnicllevant.core.dto.gestib.GrupDto;
-import cat.politecnicllevant.core.dto.gestib.UsuariDto;
+import cat.politecnicllevant.core.dto.gestib.*;
+import cat.politecnicllevant.core.model.gestib.Activitat;
 import cat.politecnicllevant.core.model.gestib.Grup;
+import cat.politecnicllevant.core.model.gestib.Sessio;
+import cat.politecnicllevant.core.model.gestib.Submateria;
+import cat.politecnicllevant.core.repository.gestib.ActivitatRepository;
 import cat.politecnicllevant.core.repository.gestib.GrupRepository;
+import cat.politecnicllevant.core.repository.gestib.SessioRepository;
+import cat.politecnicllevant.core.repository.gestib.SubmateriaRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,15 @@ import java.util.stream.Collectors;
 public class GrupService {
     @Autowired
     private GrupRepository grupRepository;
+
+    @Autowired
+    private SessioRepository sessioRepository;
+
+    @Autowired
+    private SubmateriaRepository submateriaRepository;
+
+    @Autowired
+    private ActivitatRepository activitatRepository;
 
     @Transactional
     public GrupDto save (GrupDto g){
@@ -89,6 +103,51 @@ public class GrupService {
     public List<GrupDto> findAll(){
         ModelMapper modelMapper = new ModelMapper();
         return grupRepository.findAll().stream().map(g->modelMapper.map(g,GrupDto.class)).collect(Collectors.toList());
+    }
+
+    public List<GrupDto> findAllGropusFCT(){
+        ModelMapper modelMapper = new ModelMapper();
+        List<GrupDto> groupsFCT = this.findAll().stream().filter(g->{
+            List<SessioDto> sessionsGroup = sessioRepository.findAllByGestibGrup(g.getGestibIdentificador()).stream().map(s->modelMapper.map(s,SessioDto.class)).toList();
+            boolean found = false;
+            for (SessioDto sessio : sessionsGroup) {
+                String codiGestibSubmateria = sessio.getGestibSubmateria();
+                if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
+                    Submateria submateria = submateriaRepository.findSubmateriaByGestibIdentificador(codiGestibSubmateria);
+
+                    if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
+                            (
+                                    submateria.getGestibNom().contains("Formació en centres de treball") ||
+                                            submateria.getGestibNom().contains("FCT") ||
+                                            submateria.getGestibNomCurt().contains("Formació en centres de treball") ||
+                                            submateria.getGestibNomCurt().contains("FCT")
+                            )
+                    ) {
+                        found=true;
+                        break;
+                    }
+                }
+                String codiGestibActivitat = sessio.getGestibActivitat();
+                if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
+                    Activitat activitat = activitatRepository.findActivitatByGestibIdentificador(codiGestibActivitat);
+
+                    if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
+                            (
+                                    activitat.getGestibNom().contains("Formació en centres de treball") ||
+                                            activitat.getGestibNom().contains("FCT") ||
+                                            activitat.getGestibNomCurt().contains("Formació en centres de treball") ||
+                                            activitat.getGestibNomCurt().contains("FCT")
+
+                            )
+                    ) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            return found;
+        }).toList();
+        return groupsFCT;
     }
 
     @Transactional
