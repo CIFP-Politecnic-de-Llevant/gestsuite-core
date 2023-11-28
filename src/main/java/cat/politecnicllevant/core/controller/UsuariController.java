@@ -216,9 +216,7 @@ public class UsuariController {
         for (UsuariDto profe : professors) {
             List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
             for (SessioDto sessio : sessions) {
-                GrupDto grup = grupService.findByGestibIdentificador(sessio.getGestibGrup());
-                CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
-
+                System.out.println(sessio + "-----" + sessio.getGestibGrup());
                 String codiGestibSubmateria = sessio.getGestibSubmateria();
                 if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
                     SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
@@ -226,7 +224,6 @@ public class UsuariController {
                     if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
                             (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
                             && profe.getActiu()
-                            && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
                     ) {
                         tutorsFCT.add(profe);
                         break;
@@ -239,9 +236,6 @@ public class UsuariController {
                     if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
                             (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
                             && profe.getActiu()
-                            && (grup.getGestibTutor1().contains(profe.getGestibCodi()) ||
-                            grup.getGestibTutor2().contains(profe.getGestibCodi()) ||
-                            grup.getGestibTutor3().contains(profe.getGestibCodi()))
                     ) {
                         tutorsFCT.add(profe);
                         break;
@@ -254,13 +248,13 @@ public class UsuariController {
     }
 
     @GetMapping("/usuaris/tutorfct-by-codigrup/{cursgrup}")
-    public ResponseEntity<UsuariDto> getTutorFCTByCodiGrup(@PathVariable("cursgrup") String cursGrup) {
+    public ResponseEntity<List<UsuariDto>> getTutorFCTByCodiGrup(@PathVariable("cursgrup") String cursGrup) {
         String codiCurs = cursGrup.substring(0, cursGrup.length() - 1);
         String codiGrup = cursGrup.substring(cursGrup.length() - 1);
 
         System.out.println("Curs: " + codiCurs + " Grup: " + codiGrup);
 
-        UsuariDto tutorFCT = null;
+        List<UsuariDto> tutorsFCT = new ArrayList<>();
 
         List<CursDto> cursos = cursService.findByGestibNom(codiCurs);
         if (cursos != null && !cursos.isEmpty()) {
@@ -282,7 +276,7 @@ public class UsuariController {
                                 && profe.getActiu()
                                 && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
                         ) {
-                            tutorFCT = profe;
+                            tutorsFCT.add(profe);
                             break;
                         }
                     }
@@ -297,7 +291,7 @@ public class UsuariController {
                                 grup.getGestibTutor2().contains(profe.getGestibCodi()) ||
                                 grup.getGestibTutor3().contains(profe.getGestibCodi()))
                         ) {
-                            tutorFCT = profe;
+                            tutorsFCT.add(profe);
                             break;
                         }
                     }
@@ -305,7 +299,7 @@ public class UsuariController {
             }
         }
 
-        return new ResponseEntity<>(tutorFCT, HttpStatus.OK);
+        return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
     }
 
     @GetMapping("/usuaris/profile-by-gestib-codi/{id}")

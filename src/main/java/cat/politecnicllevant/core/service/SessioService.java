@@ -71,7 +71,7 @@ public class SessioService {
     public List<SessioDto> findSessionsProfessor(UsuariDto professor) {
         ModelMapper modelMapper = new ModelMapper();
         if (professor.getGestibProfessor() != null && professor.getGestibProfessor()) {
-            return sessioRepository.findAllByGestibProfessor(professor.getGestibCodi()).stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
+            return sessioRepository.findAllByGestibProfessor(professor.getGestibCodi()).stream().map(s->modelMapper.map(s,SessioDto.class)).toList();
         } else {
             return new ArrayList<>();
         }
