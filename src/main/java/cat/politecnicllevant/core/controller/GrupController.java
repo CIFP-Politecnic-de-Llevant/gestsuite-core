@@ -10,12 +10,14 @@ import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.User;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 

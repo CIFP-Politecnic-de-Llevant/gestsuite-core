@@ -3,7 +3,6 @@ package cat.politecnicllevant.core.controller;
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.core.dto.gestib.*;
-import cat.politecnicllevant.core.model.gestib.Curs;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.Group;
 import io.jsonwebtoken.Claims;
@@ -17,10 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -185,10 +181,10 @@ public class UsuariController {
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
                 myEmail.equals(this.adminDeveloper) ||
-                (
-                        myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
-                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
-                )
+                        (
+                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
+                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
+                        )
         ) {
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         } else {
@@ -211,22 +207,66 @@ public class UsuariController {
         }
     }
 
-    @GetMapping("/usuaris/tutorfct-by-codigrup/{cursgrup}")
-    public ResponseEntity<UsuariDto> getTutorFCTByCodiGrup(@PathVariable("cursgrup") String cursGrup){
-        String codiCurs = cursGrup.substring(0,cursGrup.length()-1);
-        String codiGrup = cursGrup.substring(cursGrup.length()-1);
+    @GetMapping("/usuaris/tutorfct")
+    public ResponseEntity<List<UsuariDto>> getTutorFCT() {
+        List<UsuariDto> tutorsFCT = new ArrayList<>();
 
-        System.out.println("Curs: "+codiCurs+" Grup: "+codiGrup);
+        List<UsuariDto> professors = usuariService.findProfessors();
+
+        for (UsuariDto profe : professors) {
+            List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
+            for (SessioDto sessio : sessions) {
+                GrupDto grup = grupService.findByGestibIdentificador(sessio.getGestibGrup());
+                CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
+
+                String codiGestibSubmateria = sessio.getGestibSubmateria();
+                if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
+                    SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
+
+                    if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
+                            (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
+                            && profe.getActiu()
+                            && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
+                    ) {
+                        tutorsFCT.add(profe);
+                        break;
+                    }
+                }
+                String codiGestibActivitat = sessio.getGestibActivitat();
+                if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
+                    ActivitatDto activitat = activitatService.findByGestibIdentificador(codiGestibActivitat);
+
+                    if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
+                            (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
+                            && profe.getActiu()
+                            && (grup.getGestibTutor1().contains(profe.getGestibCodi()) ||
+                            grup.getGestibTutor2().contains(profe.getGestibCodi()) ||
+                            grup.getGestibTutor3().contains(profe.getGestibCodi()))
+                    ) {
+                        tutorsFCT.add(profe);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
+    }
+
+    @GetMapping("/usuaris/tutorfct-by-codigrup/{cursgrup}")
+    public ResponseEntity<UsuariDto> getTutorFCTByCodiGrup(@PathVariable("cursgrup") String cursGrup) {
+        String codiCurs = cursGrup.substring(0, cursGrup.length() - 1);
+        String codiGrup = cursGrup.substring(cursGrup.length() - 1);
+
+        System.out.println("Curs: " + codiCurs + " Grup: " + codiGrup);
 
         UsuariDto tutorFCT = null;
 
         List<CursDto> cursos = cursService.findByGestibNom(codiCurs);
-        if(cursos!=null && !cursos.isEmpty()){
+        if (cursos != null && !cursos.isEmpty()) {
             CursDto curs = cursos.get(0);
-            List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup,curs.getGestibIdentificador());
+            List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup, curs.getGestibIdentificador());
             GrupDto grup = grups.get(0);
-
-
 
             List<UsuariDto> professors = usuariService.findProfessors();
             for (UsuariDto profe : professors) {
@@ -279,10 +319,10 @@ public class UsuariController {
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
                 myEmail.equals(this.adminDeveloper) ||
-                (
-                    myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
-                    (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
-                )
+                        (
+                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
+                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
+                        )
         ) {
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
@@ -299,12 +339,12 @@ public class UsuariController {
         Claims claims = tokenManager.getClaims(request);
         String myEmail = (String) claims.get("email");
 
-        System.out.println("email"+email+"myEmail"+myEmail);
+        System.out.println("email" + email + "myEmail" + myEmail);
 
         UsuariDto myUser = usuariService.findByEmail(myEmail);
         UsuariDto usuari = usuariService.findByEmail(email);
 
-        System.out.println("email"+usuari+"myEmail"+myUser);
+        System.out.println("email" + usuari + "myEmail" + myUser);
 
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
