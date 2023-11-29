@@ -216,7 +216,6 @@ public class UsuariController {
         for (UsuariDto profe : professors) {
             List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
             for (SessioDto sessio : sessions) {
-                System.out.println(sessio + "-----" + sessio.getGestibGrup());
                 String codiGestibSubmateria = sessio.getGestibSubmateria();
                 if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
                     SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
@@ -225,6 +224,7 @@ public class UsuariController {
                             (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
                             && profe.getActiu()
                     ) {
+                        System.out.println("SUBMATERIA" + sessio + "-----" + sessio.getGestibGrup());
                         tutorsFCT.add(profe);
                         break;
                     }
@@ -237,6 +237,7 @@ public class UsuariController {
                             (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
                             && profe.getActiu()
                     ) {
+                        System.out.println("ACTIVITAT" + sessio + "-----" + sessio.getGestibGrup());
                         tutorsFCT.add(profe);
                         break;
                     }
