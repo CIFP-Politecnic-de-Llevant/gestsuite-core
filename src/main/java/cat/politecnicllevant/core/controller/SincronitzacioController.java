@@ -1894,7 +1894,46 @@ public class SincronitzacioController {
                     }
                 }
 
-                /* TODO: AFEGIR PROFESSOR ALS GRUPS FCT */
+                //Afegir als grup de FCT
+                List<SessioDto> sessionsFCT = sessioService.findSessionsProfessor(usuari);
+                Set<UsuariDto> grupsProfeFCT = new HashSet<>();
+                for (SessioDto sessio : sessionsFCT) {
+                    String codiGestibSubmateria = sessio.getGestibSubmateria();
+                    if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
+                        SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
+
+                        if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
+                                (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
+                                && usuari.getActiu()
+                        ) {
+                            grupsProfeFCT.add(usuari);
+                        }
+                    }
+                    String codiGestibActivitat = sessio.getGestibActivitat();
+                    if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
+                        ActivitatDto activitat = activitatService.findByGestibIdentificador(codiGestibActivitat);
+
+                        if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
+                                (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
+                                && usuari.getActiu()
+                        ) {
+                            grupsProfeFCT.add(usuari);
+                        }
+                    }
+                }
+                for (UsuariDto grupProfe : grupsProfeFCT) {
+                    List<GrupCorreuDto> grupsCorreuProfe = grupCorreuService.findByUsuari(grupProfe);
+                    for (GrupCorreuDto grupCorreu : grupsCorreuProfe) {
+                        if (grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT)) {
+                            boolean pertanyAlGrup = this.pertanyAlGrup(grupCorreu.getGsuiteEmail(), grupsProfessorOld);
+
+                            if (!pertanyAlGrup) {
+                                gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
+                            }
+                            grupsProfessorNew.add(grupCorreu);
+                        }
+                    }
+                }
 
                 /* TODO: AFEGIR PROFESSOR ALS GRUPS DE COORDINACIO */
 
