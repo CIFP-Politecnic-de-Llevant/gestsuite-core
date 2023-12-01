@@ -64,6 +64,12 @@ public class GrupCorreuService {
         return grupCorreuRepository.findAll().stream().map(gc->modelMapper.map(gc,GrupCorreuDto.class)).collect(Collectors.toList());
     }
 
+    public List<GrupCorreuDto> findAllByTipus(GrupCorreuTipusDto grupCorreuTipusDto) {
+        ModelMapper modelMapper = new ModelMapper();
+        GrupCorreuTipus grupCorreuTipus = modelMapper.map(grupCorreuTipusDto, GrupCorreuTipus.class);
+        return grupCorreuRepository.findAllByGrupCorreuTipus(grupCorreuTipus).stream().map(gc->modelMapper.map(gc,GrupCorreuDto.class)).collect(Collectors.toList());
+    }
+
     public GrupCorreuDto findById(Long id) {
         ModelMapper modelMapper = new ModelMapper();
         GrupCorreu grupCorreu = grupCorreuRepository.findById(id).get();

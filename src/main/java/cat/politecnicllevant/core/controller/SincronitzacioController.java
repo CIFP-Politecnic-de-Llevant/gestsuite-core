@@ -1896,7 +1896,7 @@ public class SincronitzacioController {
 
                 //Afegir als grup de FCT
                 List<SessioDto> sessionsFCT = sessioService.findSessionsProfessor(usuari);
-                Set<UsuariDto> grupsProfeFCT = new HashSet<>();
+                boolean esProfeFCT = false;
                 for (SessioDto sessio : sessionsFCT) {
                     String codiGestibSubmateria = sessio.getGestibSubmateria();
                     if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
@@ -1906,7 +1906,7 @@ public class SincronitzacioController {
                                 (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
                                 && usuari.getActiu()
                         ) {
-                            grupsProfeFCT.add(usuari);
+                            esProfeFCT = true;
                         }
                     }
                     String codiGestibActivitat = sessio.getGestibActivitat();
@@ -1917,21 +1917,19 @@ public class SincronitzacioController {
                                 (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
                                 && usuari.getActiu()
                         ) {
-                            grupsProfeFCT.add(usuari);
+                            esProfeFCT = true;
                         }
                     }
                 }
-                for (UsuariDto grupProfe : grupsProfeFCT) {
-                    List<GrupCorreuDto> grupsCorreuProfe = grupCorreuService.findByUsuari(grupProfe);
-                    for (GrupCorreuDto grupCorreu : grupsCorreuProfe) {
-                        if (grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT)) {
-                            boolean pertanyAlGrup = this.pertanyAlGrup(grupCorreu.getGsuiteEmail(), grupsProfessorOld);
+                if (esProfeFCT) {
+                    List<GrupCorreuDto> grupsFCT = grupCorreuService.findAllByTipus(GrupCorreuTipusDto.TUTORS_FCT);
+                    for (GrupCorreuDto grupFCT : grupsFCT) {
+                        boolean pertanyAlGrup = this.pertanyAlGrup(grupFCT.getGsuiteEmail(), grupsProfessorOld);
 
-                            if (!pertanyAlGrup) {
-                                gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
-                            }
-                            grupsProfessorNew.add(grupCorreu);
+                        if (!pertanyAlGrup) {
+                            gSuiteService.createMember(usuari.getGsuiteEmail(), grupFCT.getGsuiteEmail());
                         }
+                        grupsProfessorNew.add(grupFCT);
                     }
                 }
 
@@ -2104,10 +2102,10 @@ public class SincronitzacioController {
         log.info("Acaba sincronització alumnes");
     }
 
-    private boolean pertanyAlGrup(String email, List<Group> grupsUsuari) {
+    private boolean pertanyAlGrup(String emailGroup, List<Group> grupsUsuari) {
         boolean pertanyAlGrup = false;
         for (Group grup : grupsUsuari) {
-            if (grup.getEmail().equals(email)) {
+            if (grup.getEmail().equals(emailGroup)) {
                 pertanyAlGrup = true;
                 break;
             }
