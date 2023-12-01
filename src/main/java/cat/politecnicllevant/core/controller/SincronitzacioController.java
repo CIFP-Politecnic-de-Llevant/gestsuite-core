@@ -1940,30 +1940,7 @@ public class SincronitzacioController {
                 /* TODO: AFEGIR PROFESSOR ALS CALENDARIS DE L'ESCOLA */
 
                 //Esborrem grups que no hem trobat
-                for (GrupCorreuDto grupNew : grupsProfessorNew) {
-                    GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(grupNew.getGsuiteEmail());
-                    if (grupCorreu != null) {
-                        boolean isGrupClaustre = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.CLAUSTRE);
-                        boolean isGrupProfessors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.PROFESSORAT);
-                        boolean isGrupTutors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS);
-                        boolean isGrupDepartament = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.DEPARTAMENT);
-                        boolean isGrupTutorsFCT = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT);
-                        boolean isGrupCoordinacions = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.COORDINACIO);
-                        boolean isGrupAlumnat = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT);
-                        boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
-                        if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
-                            if (usuari.getGsuiteEmail() != null && grupNew.getGsuiteEmail() != null && !isBloquejat) {
-                                boolean pertanyAlGrup = grupCorreuService.findByUsuari(usuari).stream().anyMatch(gc -> gc.getGsuiteEmail().equals(grupNew.getGsuiteEmail()));
-                                if (!pertanyAlGrup) {
-                                    gSuiteService.createMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-                /*for (Group grupOld : grupsProfessorOld) {
+                for (Group grupOld : grupsProfessorOld) {
                     boolean trobat = false;
                     for (GrupCorreuDto grupNew : grupsProfessorNew) {
                         if (grupOld.getEmail().equals(grupNew.getGsuiteEmail())) {
@@ -1990,7 +1967,7 @@ public class SincronitzacioController {
                             }
                         }
                     }
-                }*/
+                }
             }
         }
         log.info("Acaba sincronització professors");
@@ -2092,30 +2069,7 @@ public class SincronitzacioController {
 
 
                 //Esborrem grups que no hem trobat
-                    for (GrupCorreuDto grupNew : grupsAlumneNew) {
-                        GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(grupNew.getGsuiteEmail());
-                        if (grupCorreu != null) {
-                            boolean isGrupClaustre = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.CLAUSTRE);
-                            boolean isGrupProfessors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.PROFESSORAT);
-                            boolean isGrupTutors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS);
-                            boolean isGrupDepartament = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.DEPARTAMENT);
-                            boolean isGrupTutorsFCT = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT);
-                            boolean isGrupCoordinacions = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.COORDINACIO);
-                            boolean isGrupAlumnat = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT);
-                            boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
-                            if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
-                                if (usuari.getGsuiteEmail() != null && grupNew.getGsuiteEmail() != null && !isBloquejat) {
-                                    boolean pertanyAlGrup = grupCorreuService.findByUsuari(usuari).stream().anyMatch(gc -> gc.getGsuiteEmail().equals(grupNew.getGsuiteEmail()));
-                                    if (!pertanyAlGrup) {
-                                        gSuiteService.createMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-
-                /*for (Group grupOld : grupsAlumneOld) {
+                for (Group grupOld : grupsAlumneOld) {
                     boolean trobat = false;
                     for (GrupCorreuDto grupNew : grupsAlumneNew) {
                         if (grupOld.getEmail().equals(grupNew.getGsuiteEmail())) {
@@ -2142,7 +2096,7 @@ public class SincronitzacioController {
                             }
                         }
                     }
-                }*/
+                }
 
             }
         }
@@ -2150,9 +2104,9 @@ public class SincronitzacioController {
         log.info("Acaba sincronització alumnes");
     }
 
-    private boolean pertanyAlGrup(String email, List<Group> grupUsuaris) {
+    private boolean pertanyAlGrup(String email, List<Group> grupsUsuari) {
         boolean pertanyAlGrup = false;
-        for (Group grup : grupUsuaris) {
+        for (Group grup : grupsUsuari) {
             if (grup.getEmail().equals(email)) {
                 pertanyAlGrup = true;
                 break;
