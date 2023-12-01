@@ -1953,7 +1953,10 @@ public class SincronitzacioController {
                         boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
                         if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
                             if (usuari.getGsuiteEmail() != null && grupNew.getGsuiteEmail() != null && !isBloquejat) {
-                                gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
+                                boolean pertanyAlGrup = grupCorreuService.findByUsuari(usuari).stream().anyMatch(gc -> gc.getGsuiteEmail().equals(grupNew.getGsuiteEmail()));
+                                if (!pertanyAlGrup) {
+                                    gSuiteService.createMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
+                                }
                             }
                         }
                     }
@@ -2102,7 +2105,10 @@ public class SincronitzacioController {
                             boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
                             if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
                                 if (usuari.getGsuiteEmail() != null && grupNew.getGsuiteEmail() != null && !isBloquejat) {
-                                    gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
+                                    boolean pertanyAlGrup = grupCorreuService.findByUsuari(usuari).stream().anyMatch(gc -> gc.getGsuiteEmail().equals(grupNew.getGsuiteEmail()));
+                                    if (!pertanyAlGrup) {
+                                        gSuiteService.createMember(usuari.getGsuiteEmail(), grupNew.getGsuiteEmail());
+                                    }
                                 }
                             }
                         }
