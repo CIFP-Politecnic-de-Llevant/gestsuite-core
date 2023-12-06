@@ -348,11 +348,53 @@ public class SincronitzacioController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
+    @PostMapping("/sync/reassignarGrupsProfessorsForce")
+    public ResponseEntity<Notificacio> reassignarGrupsProfessorsForceTots() throws InterruptedException {
+        //List<UsuariDto> professors = usuariService.findProfessors();
+        //this.reassignarGrupsProfessor(professors);
+        this.reassignarGrupsProfessor(true);
+        this.esborrarGrupsUsuarisNoActius();
+
+        log.info("Actualitzant Grups de Correu a la base de dades...");
+        this.createGrupsCorreuGSuiteToDatabase();
+        this.deleteGrupsCorreuGSuiteToDatabase();
+        this.updateGrupsCorreuGSuiteToDatabase();
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Reassignació de grups de professors finalitzat correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        log.info("Reassignació de grups de professors finalitzat correctament");
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
     @PostMapping("/sync/reassignarGrupsAlumnes")
     public ResponseEntity<Notificacio> reassignarGrupsAlumnesTots() throws InterruptedException {
         //List<UsuariDto> alumnes = usuariService.findAlumnes(false);
         //this.reassignarGrupsAlumne(alumnes);
         this.reassignarGrupsAlumne();
+        this.esborrarGrupsUsuarisNoActius();
+
+        log.info("Actualitzant Grups de Correu a la base de dades...");
+        this.createGrupsCorreuGSuiteToDatabase();
+        this.deleteGrupsCorreuGSuiteToDatabase();
+        this.updateGrupsCorreuGSuiteToDatabase();
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Reassignació de grups d'alumnes finalitzat correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        log.info("Reassignació de grups d'alumnes finalitzat correctament");
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/sync/reassignarGrupsAlumnesForce")
+    public ResponseEntity<Notificacio> reassignarGrupsAlumnesForceTots() throws InterruptedException {
+        //List<UsuariDto> alumnes = usuariService.findAlumnes(false);
+        //this.reassignarGrupsAlumne(alumnes);
+        this.reassignarGrupsAlumne(true);
         this.esborrarGrupsUsuarisNoActius();
 
         log.info("Actualitzant Grups de Correu a la base de dades...");
@@ -1786,6 +1828,10 @@ public class SincronitzacioController {
     }
 
     private void reassignarGrupsProfessor() throws InterruptedException {
+        this.reassignarGrupsProfessor(false);
+    }
+
+    private void reassignarGrupsProfessor(boolean forceReassign) throws InterruptedException {
         List<UsuariDto> professors = usuariService.findProfessors();
 
         for (UsuariDto usuari : professors) {
@@ -1824,7 +1870,11 @@ public class SincronitzacioController {
 
                             if (!pertanyAlGrup) {
                                 gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuDepartament.getGsuiteEmail());
+                            } else if (forceReassign) {
+                                gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupCorreuDepartament.getGsuiteEmail());
+                                gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuDepartament.getGsuiteEmail());
                             }
+
                             grupsProfessorNew.add(grupCorreuDepartament);
 
                         }
@@ -1847,6 +1897,9 @@ public class SincronitzacioController {
 
                                     if (!pertanyAlGrup) {
                                         gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
+                                    } else if (forceReassign) {
+                                        gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
+                                        gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
                                     }
                                     grupsProfessorNew.add(grupCorreu);
                                 }
@@ -1864,6 +1917,9 @@ public class SincronitzacioController {
                         boolean pertanyAlGrup = this.pertanyAlGrup(grupClaustre.getGsuiteEmail(), grupsProfessorOld);
 
                         if (!pertanyAlGrup) {
+                            gSuiteService.createMember(usuari.getGsuiteEmail(), grupClaustre.getGsuiteEmail());
+                        } else if (forceReassign) {
+                            gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupClaustre.getGsuiteEmail());
                             gSuiteService.createMember(usuari.getGsuiteEmail(), grupClaustre.getGsuiteEmail());
                         }
                         grupsProfessorNew.add(grupClaustre);
@@ -1887,6 +1943,9 @@ public class SincronitzacioController {
                             boolean pertanyAlGrup = this.pertanyAlGrup(grupCorreu.getGsuiteEmail(), grupsProfessorOld);
 
                             if (!pertanyAlGrup) {
+                                gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
+                            } else if (forceReassign) {
+                                gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
                                 gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
                             }
                             grupsProfessorNew.add(grupCorreu);
@@ -1928,12 +1987,13 @@ public class SincronitzacioController {
 
                         if (!pertanyAlGrup) {
                             gSuiteService.createMember(usuari.getGsuiteEmail(), grupFCT.getGsuiteEmail());
+                        } else if (forceReassign) {
+                            gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupFCT.getGsuiteEmail());
+                            gSuiteService.createMember(usuari.getGsuiteEmail(), grupFCT.getGsuiteEmail());
                         }
                         grupsProfessorNew.add(grupFCT);
                     }
                 }
-
-                /* TODO: AFEGIR PROFESSOR ALS GRUPS DE COORDINACIO */
 
                 /* TODO: AFEGIR PROFESSOR ALS CALENDARIS DE L'ESCOLA */
 
@@ -1972,6 +2032,10 @@ public class SincronitzacioController {
     }
 
     private void reassignarGrupsAlumne() throws InterruptedException {
+        this.reassignarGrupsAlumne(false);
+    }
+
+    private void reassignarGrupsAlumne(boolean forceReassign) throws InterruptedException {
         List<UsuariDto> alumnes = usuariService.findAlumnes(false);
 
         for (UsuariDto usuari : alumnes) {
@@ -2012,6 +2076,9 @@ public class SincronitzacioController {
 
                             if (!pertanyAlGrup) {
                                 //Creem l'alumne dins el seu grup
+                                gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
+                            } else if (forceReassign) {
+                                gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
                                 gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
                             }
                             grupsAlumneNew.add(grupCorreu);
