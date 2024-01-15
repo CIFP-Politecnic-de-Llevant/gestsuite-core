@@ -176,7 +176,8 @@ public class SincronitzacioController {
             }
 
             // Passam l'arxiu a dins una carpeta
-            String fileName = this.tmpPath + "/arxiu.xml";
+            CentreDto centreBBDD= centreService.findAll().get(0);
+            String fileName = this.tmpPath + "/arxiu-"+centreBBDD.getIdentificador()+".xml";
 
             OutputStream outputStream = new FileOutputStream(fileName);
             os.writeTo(outputStream);
@@ -517,7 +518,7 @@ public class SincronitzacioController {
 
     private List<String> simula(@NotNull CentreDto centre, List<UsuariDto> usuarisNoActiusBeforeSync) {
         // Passam l'arxiu a dins una carpeta
-        String fileName = this.tmpPath + "/arxiu.xml";
+        String fileName = this.tmpPath + "/arxiu-"+centre.getIdentificador()+".xml";
         List<String> resultat = new ArrayList<>();
 
         File f = new File(fileName);
@@ -922,7 +923,7 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisUpdate = new ArrayList<>();
 
         // Passam l'arxiu a dins una carpeta
-        String fileName = this.tmpPath + "/arxiu.xml";
+        String fileName = this.tmpPath + "/arxiu-"+centre.getIdentificador()+".xml";
 
         File f = new File(fileName);
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
