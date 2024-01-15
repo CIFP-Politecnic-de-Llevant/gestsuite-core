@@ -303,6 +303,37 @@ public class UsuariController {
         return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
     }
 
+    @GetMapping("/usuaris/alumnes-by-codigrup/{cursgrup}")
+    public ResponseEntity<List<UsuariDto>> getAlumnesByCodiGrup(@PathVariable("cursgrup") String cursGrup) {
+        String codiCurs = cursGrup.substring(0, cursGrup.length() - 1);
+        String codiGrup = cursGrup.substring(cursGrup.length() - 1);
+
+        System.out.println("Curs: " + codiCurs + " Grup: " + codiGrup);
+
+        List<UsuariDto> alumnesGrup = new ArrayList<>();
+
+        List<CursDto> cursos = cursService.findByGestibNom(codiCurs);
+        if (cursos != null && !cursos.isEmpty()) {
+            CursDto curs = cursos.get(0);
+            List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup, curs.getGestibIdentificador());
+            GrupDto grup = grups.get(0);
+
+            List<UsuariDto> alumnes = usuariService.findAlumnes(false);
+            for (UsuariDto alumne : alumnes) {
+                System.out.println("Usuari:" + alumne.getGsuiteFullName() + "Email:" + alumne.getGsuiteEmail());
+                if(alumne.getGestibGrup() != null && alumne.getGestibGrup().equals(grup.getGestibIdentificador())){
+                    alumnesGrup.add(alumne);
+                } else if(alumne.getGestibGrup2() != null && alumne.getGestibGrup2().equals(grup.getGestibIdentificador())){
+                    alumnesGrup.add(alumne);
+                } else if(alumne.getGestibGrup3() != null && alumne.getGestibGrup3().equals(grup.getGestibIdentificador())){
+                    alumnesGrup.add(alumne);
+                }
+            }
+        }
+
+        return new ResponseEntity<>(alumnesGrup, HttpStatus.OK);
+    }
+
     @GetMapping("/usuaris/profile-by-gestib-codi/{id}")
     public ResponseEntity<UsuariDto> getUsuariByGestibCodi(@PathVariable("id") String gestibCodi, HttpServletRequest request) throws Exception {
         Claims claims = tokenManager.getClaims(request);
