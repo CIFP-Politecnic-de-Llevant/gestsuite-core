@@ -303,6 +303,38 @@ public class SincronitzacioController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
+    @PostMapping("/sync/comparegsuitegestib")
+    public ResponseEntity<Notificacio> getGSuiteAngGestibUsers() throws InterruptedException {
+        List<UsuariDto> usuaris = usuariService.findAll();
+        List<User> usuarisGSuite = gSuiteService.getUsers();
+
+
+        //Crear nous
+        /*
+        List<UsuariDto> usuaris = usuariService.findAll();
+        List<User> usuarisGSuite = gSuiteService.getUsers();
+
+        for(UsuariDto usuari: usuaris){
+            boolean trobat = false;
+            for(User usuariGSuite: usuarisGSuite){
+                if(usuari.getGsuiteEmail().equals(usuariGSuite.getPrimaryEmail())){
+                    trobat = true;
+                }
+            }
+            if(!trobat){
+                User userSaved = gSuiteService.createUser(usuari.getGsuiteEmail(),usuari.getGsuiteGivenName(),usuari.getGsuiteFamilyName(),"","/alumnat");
+                System.out.println(userSaved.getPrimaryEmail()+","+userSaved.getName().getGivenName()+","+userSaved.getName().getFamilyName()+","+userSaved.getName().getFullName());
+            }
+        }
+         */
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Usuaris de GSuite importats correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
     @PostMapping("/sync/reassignarGrups")
     public ResponseEntity<Notificacio> reassignarGrups(@RequestBody List<UsuariDto> usuaris) throws InterruptedException {
         /*List<UsuariDto> professors = new ArrayList<>();
@@ -2170,6 +2202,11 @@ public class SincronitzacioController {
         log.info("Acaba sincronització alumnes");
     }
 
+
+
+
+
+
     private boolean pertanyAlGrup(String emailGroup, List<Group> grupsUsuari) {
         boolean pertanyAlGrup = false;
         for (Group grup : grupsUsuari) {
@@ -2266,6 +2303,7 @@ public class SincronitzacioController {
 
         return username + i + domini;
     }
+
 
     private String removeAccents(String input) {
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
