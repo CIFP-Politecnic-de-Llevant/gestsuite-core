@@ -109,6 +109,7 @@ public class GSuiteService {
                 return getUsers(retry + 1);
             }
             log.error("Error aconseguint els usuaris de GSuite");
+            log.error(e.getMessage());
         }
         return new ArrayList<>();
     }

@@ -303,10 +303,12 @@ public class SincronitzacioController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
-    @PostMapping("/sync/comparegsuitegestib")
+    @PostMapping("/sync/mergegsuitegestib")
     public ResponseEntity<Notificacio> getGSuiteAngGestibUsers() throws InterruptedException {
         List<UsuariDto> usuaris = usuariService.findAll();
         List<User> usuarisGSuite = gSuiteService.getUsers();
+
+
 
 
         //Crear nous
