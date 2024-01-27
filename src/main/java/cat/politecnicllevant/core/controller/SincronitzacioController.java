@@ -395,6 +395,15 @@ public class SincronitzacioController {
                             u.setGsuitePersonalID(codi);
                             usuariService.save(u);
 
+                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                            gSuiteService.updateUser(
+                                    gsuiteUser.getPrimaryEmail(),
+                                    gsuiteUser.getName().getGivenName(),
+                                    gsuiteUser.getName().getFamilyName(),
+                                    codi,
+                                    gsuiteUser.getOrgUnitPath()
+                            );
+
                             resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
                             mesclats++;
                         } else if (usuarisCandidats.size() > 1) {
@@ -404,7 +413,7 @@ public class SincronitzacioController {
                             }
                             resultat.add("");
                         } else {
-                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " no existeix, s'ha d'introduir a mà.");
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no existeix, s'ha d'introduir a mà.");
                         }
                     }
                 }
@@ -441,6 +450,15 @@ public class SincronitzacioController {
                             u.setGsuitePersonalID(codi);
                             usuariService.save(u);
 
+                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                            gSuiteService.updateUser(
+                                    gsuiteUser.getPrimaryEmail(),
+                                    gsuiteUser.getName().getGivenName(),
+                                    gsuiteUser.getName().getFamilyName(),
+                                    codi,
+                                    gsuiteUser.getOrgUnitPath()
+                            );
+
                             resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
                             mesclats++;
                         } else if (usuarisCandidats.size() > 1) {
@@ -450,7 +468,7 @@ public class SincronitzacioController {
                             }
                             resultat.add("");
                         } else {
-                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix, s'ha d'introduir a mà.");
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no existeix, s'ha d'introduir a mà.");
                         }
                     }
                 }
