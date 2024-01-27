@@ -404,10 +404,10 @@ public class SincronitzacioController {
                                     gsuiteUser.getOrgUnitPath()
                             );
 
-                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
                             mesclats++;
                         } else if (usuarisCandidats.size() > 1) {
-                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " té vàries opcions:");
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
                             for (UsuariDto usuariCandidat : usuarisCandidats) {
                                 resultat.add("Usuari candidat: " + usuariCandidat.getGsuiteEmail() + " - " + usuariCandidat.getGsuiteGivenName() + " " + usuariCandidat.getGsuiteFamilyName());
                             }
@@ -459,10 +459,10 @@ public class SincronitzacioController {
                                     gsuiteUser.getOrgUnitPath()
                             );
 
-                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
                             mesclats++;
                         } else if (usuarisCandidats.size() > 1) {
-                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " té vàries opcions:");
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
                             for (UsuariDto usuariCandidat : usuarisCandidats) {
                                 resultat.add("Usuari candidat: " + usuariCandidat.getGsuiteEmail() + " - " + usuariCandidat.getGsuiteGivenName() + " " + usuariCandidat.getGsuiteFamilyName());
                             }
