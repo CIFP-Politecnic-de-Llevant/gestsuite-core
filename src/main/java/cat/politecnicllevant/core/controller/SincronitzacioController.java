@@ -2419,6 +2419,7 @@ public class SincronitzacioController {
 
     private String generateUsername(UsuariDto usuari, String format) throws InterruptedException {
 
+        String[] ignorat = {"de", "del", "la", "las", "los", "el", "els", "i", "dels", "a", "al", "als", "l'", "na", "no", "es", "en", "es"};
         String nom = removeAccents(usuari.getGestibNom());
         String cognom1 = removeAccents(usuari.getGestibCognom1());
         String cognom2 = removeAccents(usuari.getGestibCognom2());
@@ -2435,6 +2436,16 @@ public class SincronitzacioController {
             case "ncognom1" -> username = nom.charAt(0) + cognom1.trim();
             case "ncognom1exp" -> username = nom.charAt(0) + cognom1.trim() + usuari.getGestibExpedient();
             case "n.cognom1cognom2" -> username = nom.charAt(0) + "." + cognom1.trim() + cognom2.trim();
+            case "nmcognom1" -> {
+                String[] nomCompost = nom.split(" ");
+                StringBuilder nomCompostFinal = new StringBuilder();
+                for (String nomCompostPart : nomCompost) {
+                    if(!Arrays.asList(ignorat).contains(nomCompostPart.toLowerCase())) {
+                        nomCompostFinal.append(nomCompostPart.charAt(0));
+                    }
+                }
+                username = nomCompostFinal + cognom1.trim();
+            }
         }
 
         username = username.trim().toLowerCase();
