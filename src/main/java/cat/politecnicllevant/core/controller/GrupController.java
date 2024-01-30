@@ -5,6 +5,7 @@ import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.CursDto;
 import cat.politecnicllevant.core.dto.gestib.GrupDto;
+import cat.politecnicllevant.core.dto.gestib.RolDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.User;
@@ -18,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,6 +32,9 @@ public class GrupController {
 
     @Autowired
     private GrupService grupService;
+
+    @Autowired
+    private SessioService sessioService;
 
     @Autowired
     private TokenManager tokenManager;
@@ -50,6 +56,34 @@ public class GrupController {
     public ResponseEntity<List<GrupDto>> getGrups() {
         List<GrupDto> grups = grupService.findAll().stream().filter(GrupDto::getActiu).collect(Collectors.toList());
         return new ResponseEntity<>(grups, HttpStatus.OK);
+    }
+
+    @GetMapping({"/grup/llistatprofessorat"})
+    public ResponseEntity<List<GrupDto>> getGrupsProfessorat(HttpServletRequest request) {
+        Claims claims = tokenManager.getClaims(request);
+
+        String email = (String) claims.get("email");
+        System.out.println("Email usuari profile: " + email);
+        UsuariDto usuari = usuariService.findByEmail(email);
+        List<String> rolsClaim = (List<String>)claims.get("rols");
+        Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
+
+        if(rols.contains(RolDto.ADMINISTRADOR)) {
+            List<GrupDto> grups = grupService.findAll().stream().filter(GrupDto::getActiu).collect(Collectors.toList());
+            return new ResponseEntity<>(grups, HttpStatus.OK);
+        } else if (rols.contains(RolDto.PROFESSOR)) {
+            List<GrupDto> grups = grupService.findByTutor(usuari);
+            sessioService.findSessionsProfessor(usuari).forEach(s -> {
+                GrupDto grup = grupService.findByGestibIdentificador(s.getGestibGrup());
+                if (!grups.contains(grup)) {
+                    grups.add(grup);
+                }
+            });
+            return new ResponseEntity<>(grups, HttpStatus.OK);
+        } else {
+            System.out.println("Usuari sense rol: "+rols);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
     }
 
     @GetMapping("/grup/findByCurs/{idcurs}")

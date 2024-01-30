@@ -3,6 +3,7 @@ package cat.politecnicllevant.core.controller;
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.core.dto.gestib.*;
+import cat.politecnicllevant.core.model.gestib.Rol;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.Group;
 import io.jsonwebtoken.Claims;
@@ -339,17 +340,30 @@ public class UsuariController {
         Claims claims = tokenManager.getClaims(request);
         String myEmail = (String) claims.get("email");
 
+        List<String> rolsClaim = (List<String>)claims.get("rols");
+        Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
+
         UsuariDto myUser = usuariService.findByEmail(myEmail);
         UsuariDto usuari = usuariService.findByGestibCodi(gestibCodi);
 
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
-                myEmail.equals(this.adminDeveloper) ||
-                        (
-                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
-                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
-                        )
+            myEmail.equals(this.adminDeveloper) ||
+            (
+                myUser != null &&
+                usuari != null &&
+                myUser.getGsuiteEmail() != null &&
+                usuari.getGsuiteEmail() != null &&
+                (
+                    myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
+                    rols.contains(RolDto.ADMINISTRADOR) ||
+                    rols.contains(RolDto.DIRECTOR) ||
+                    rols.contains(RolDto.CAP_ESTUDIS)
+                )
+            )
         ) {
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
+        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
 
@@ -366,6 +380,8 @@ public class UsuariController {
         String myEmail = (String) claims.get("email");
 
         System.out.println("email" + email + "myEmail" + myEmail);
+        List<String> rolsClaim = (List<String>)claims.get("rols");
+        Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
 
         UsuariDto myUser = usuariService.findByEmail(myEmail);
         UsuariDto usuari = usuariService.findByEmail(email);
@@ -375,15 +391,25 @@ public class UsuariController {
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
                 myEmail.equals(this.adminDeveloper) ||
-                        (
-                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
-                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
-                        )
+                (
+                    myUser != null &&
+                    usuari != null &&
+                    myUser.getGsuiteEmail() != null &&
+                    usuari.getGsuiteEmail() != null &&
+                    (
+                            myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
+                            rols.contains(RolDto.ADMINISTRADOR) ||
+                            rols.contains(RolDto.DIRECTOR) ||
+                            rols.contains(RolDto.CAP_ESTUDIS)
+                    )
+                )
         ) {
             return new ResponseEntity<>(usuari, HttpStatus.OK);
-        } else {
-            throw new Exception("Sense permisos");
+        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
+
+        return new ResponseEntity<>(usuari, HttpStatus.UNAUTHORIZED);
     }
 
     @PostMapping("/usuari/reset")
