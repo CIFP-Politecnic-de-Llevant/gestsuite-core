@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,10 +73,16 @@ public class GrupController {
             List<GrupDto> grups = grupService.findAll().stream().filter(GrupDto::getActiu).collect(Collectors.toList());
             return new ResponseEntity<>(grups, HttpStatus.OK);
         } else if (rols.contains(RolDto.PROFESSOR)) {
-            List<GrupDto> grups = grupService.findByTutor(usuari);
+            List<GrupDto> grups = new ArrayList<>();
+
+            List<GrupDto> grupsTutoria = grupService.findByTutor(usuari);
+            if(grupsTutoria != null && !grupsTutoria.isEmpty()) {
+                grups.addAll(grupsTutoria);
+            }
+
             sessioService.findSessionsProfessor(usuari).forEach(s -> {
                 GrupDto grup = grupService.findByGestibIdentificador(s.getGestibGrup());
-                if (!grups.contains(grup)) {
+                if (grup!=null && !grups.contains(grup)) {
                     grups.add(grup);
                 }
             });

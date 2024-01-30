@@ -179,18 +179,35 @@ public class UsuariController {
         UsuariDto myUser = usuariService.findByEmail(myEmail);
         UsuariDto usuari = usuariService.findById(Long.valueOf(idUsuari));
 
+        List<String> rolsClaim = (List<String>)claims.get("rols");
+        Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
+
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
         if (
                 myEmail.equals(this.adminDeveloper) ||
                         (
-                                myUser != null && usuari != null && myUser.getGsuiteEmail() != null && usuari.getGsuiteEmail() != null &&
-                                        (myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) || myUser.getRols().contains(RolDto.ADMINISTRADOR) || myUser.getRols().contains(RolDto.DIRECTOR) || myUser.getRols().contains(RolDto.CAP_ESTUDIS))
+                                myUser != null &&
+                                        usuari != null &&
+                                        myUser.getGsuiteEmail() != null &&
+                                        usuari.getGsuiteEmail() != null &&
+                                        (
+                                                myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
+                                                        rols.contains(RolDto.ADMINISTRADOR) ||
+                                                        rols.contains(RolDto.DIRECTOR) ||
+                                                        rols.contains(RolDto.CAP_ESTUDIS)
+                                        )
                         )
         ) {
             return new ResponseEntity<>(usuari, HttpStatus.OK);
-        } else {
-            throw new Exception("Sense permisos");
+        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
+
+        if (usuari == null) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
     @GetMapping("/usuaris/profile")
