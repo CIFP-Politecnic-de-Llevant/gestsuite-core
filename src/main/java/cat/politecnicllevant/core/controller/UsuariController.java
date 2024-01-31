@@ -183,6 +183,7 @@ public class UsuariController {
         Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
 
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        /** TODO: PROFESSORS FILTRAR MILLOR **/
         if (
                 myEmail.equals(this.adminDeveloper) ||
                         (
@@ -194,12 +195,11 @@ public class UsuariController {
                                                 myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                                                         rols.contains(RolDto.ADMINISTRADOR) ||
                                                         rols.contains(RolDto.DIRECTOR) ||
-                                                        rols.contains(RolDto.CAP_ESTUDIS)
+                                                        rols.contains(RolDto.CAP_ESTUDIS) ||
+                                                        rols.contains(RolDto.PROFESSOR)
                                         )
                         )
         ) {
-            return new ResponseEntity<>(usuari, HttpStatus.OK);
-        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
 
@@ -364,6 +364,7 @@ public class UsuariController {
         UsuariDto usuari = usuariService.findByGestibCodi(gestibCodi);
 
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        /** TODO: PROFESSORS FILTRAR MILLOR **/
         if (
             myEmail.equals(this.adminDeveloper) ||
             (
@@ -375,12 +376,11 @@ public class UsuariController {
                     myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                     rols.contains(RolDto.ADMINISTRADOR) ||
                     rols.contains(RolDto.DIRECTOR) ||
-                    rols.contains(RolDto.CAP_ESTUDIS)
+                    rols.contains(RolDto.CAP_ESTUDIS) ||
+                    rols.contains(RolDto.PROFESSOR)
                 )
             )
         ) {
-            return new ResponseEntity<>(usuari, HttpStatus.OK);
-        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
 
@@ -406,6 +406,7 @@ public class UsuariController {
         System.out.println("email" + usuari + "myEmail" + myUser);
 
         //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        /** TODO: PROFESSORS FILTRAR MILLOR **/
         if (
                 myEmail.equals(this.adminDeveloper) ||
                 (
@@ -417,12 +418,11 @@ public class UsuariController {
                             myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                             rols.contains(RolDto.ADMINISTRADOR) ||
                             rols.contains(RolDto.DIRECTOR) ||
-                            rols.contains(RolDto.CAP_ESTUDIS)
+                            rols.contains(RolDto.CAP_ESTUDIS) ||
+                            rols.contains(RolDto.PROFESSOR)
                     )
                 )
         ) {
-            return new ResponseEntity<>(usuari, HttpStatus.OK);
-        } else if(rols.contains(RolDto.PROFESSOR) && usuari != null && usuari.getGestibAlumne()){
             return new ResponseEntity<>(usuari, HttpStatus.OK);
         }
 
