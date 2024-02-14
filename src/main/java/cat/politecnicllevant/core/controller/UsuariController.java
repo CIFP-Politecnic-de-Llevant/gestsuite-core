@@ -171,6 +171,12 @@ public class UsuariController {
         return new ResponseEntity<>(rols, HttpStatus.OK);
     }
 
+    @GetMapping("/usuaris/findbynumexpedient/{numexpedient}")
+    public ResponseEntity<UsuariDto> getUsuariByNumExpedient(@PathVariable("numexpedient") String numExpedient) {
+        UsuariDto usuari = usuariService.findUsuariByGestibExpedient(numExpedient);
+        return new ResponseEntity<>(usuari, HttpStatus.OK);
+    }
+
     @GetMapping("/usuaris/profile/{id}")
     public ResponseEntity<UsuariDto> getProfile(@PathVariable("id") String idUsuari, HttpServletRequest request) throws Exception {
         Claims claims = tokenManager.getClaims(request);

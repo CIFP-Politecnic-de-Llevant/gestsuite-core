@@ -12,6 +12,8 @@ public interface UsuariRepository extends JpaRepository<Usuari, Long> {
 
     Usuari findUsuariByGsuiteEmail(String email);
 
+    Usuari findUsuariByGestibExpedientAndActiuIsTrueAndGestibAlumneIsTrue(String expedient);
+
     Usuari findUsuariByGestibCodiOrGsuiteEmail(String codi, String email);
 
     Usuari findUsuariByGsuitePersonalID(String codi);

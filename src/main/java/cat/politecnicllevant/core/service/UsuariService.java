@@ -154,6 +154,15 @@ public class UsuariService {
         return null;
     }
 
+    public UsuariDto findUsuariByGestibExpedient(String expedient) {
+        ModelMapper modelMapper = new ModelMapper();
+        Usuari usuari = usuariRepository.findUsuariByGestibExpedientAndActiuIsTrueAndGestibAlumneIsTrue(expedient);
+        if(usuari!=null) {
+            return modelMapper.map(usuari, UsuariDto.class);
+        }
+        return null;
+    }
+
     /**
      * Cerquem primer per codi i si no existeix per email
      */
