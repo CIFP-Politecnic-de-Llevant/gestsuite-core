@@ -429,6 +429,44 @@ public class UsuariController {
         return new ResponseEntity<>(usuari, HttpStatus.UNAUTHORIZED);
     }
 
+    @GetMapping("/usuaris/profile-by-email/{id}/{token}")
+    public ResponseEntity<UsuariDto> getUsuariByEmailSystem(@PathVariable("id") String email, @PathVariable("token") String token) throws Exception {
+        Claims claims = tokenManager.getClaims(token);
+        String myEmail = (String) claims.get("email");
+
+        System.out.println("email" + email + "myEmail" + myEmail);
+        List<String> rolsClaim = (List<String>)claims.get("rols");
+        Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
+
+        UsuariDto myUser = usuariService.findByEmail(myEmail);
+        UsuariDto usuari = usuariService.findByEmail(email);
+
+        System.out.println("email" + usuari + "myEmail" + myUser);
+
+        //Si l'usuari que fa la consulta és el mateix o bé si té rol de cap d'estudis, director o administrador
+        /** TODO: PROFESSORS FILTRAR MILLOR **/
+        if (
+                myEmail.equals(this.adminDeveloper) ||
+                        (
+                                myUser != null &&
+                                        usuari != null &&
+                                        myUser.getGsuiteEmail() != null &&
+                                        usuari.getGsuiteEmail() != null &&
+                                        (
+                                                myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
+                                                        rols.contains(RolDto.ADMINISTRADOR) ||
+                                                        rols.contains(RolDto.DIRECTOR) ||
+                                                        rols.contains(RolDto.CAP_ESTUDIS) ||
+                                                        rols.contains(RolDto.PROFESSOR)
+                                        )
+                        )
+        ) {
+            return new ResponseEntity<>(usuari, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(usuari, HttpStatus.UNAUTHORIZED);
+    }
+
     @PostMapping("/usuari/reset")
     public ResponseEntity<Notificacio> resetPassword(@RequestBody Map<String, String> json) throws GeneralSecurityException, IOException, InterruptedException {
         gSuiteService.resetPassword(json.get("usuari"), this.passwordInicial);

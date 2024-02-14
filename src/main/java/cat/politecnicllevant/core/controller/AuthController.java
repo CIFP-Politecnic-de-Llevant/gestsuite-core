@@ -49,6 +49,9 @@ public class AuthController {
     @Value("${centre.domini.principal}")
     private String dominiPrincipal;
 
+    @Value("${public.password}")
+    private String publicPassword;
+
     @PostMapping("/auth/google/login")
     public ResponseEntity<?> loginUserGoogle(@RequestBody String token, HttpServletRequest request, HttpServletResponse response) throws GeneralSecurityException, IOException {
 
@@ -137,4 +140,15 @@ public class AuthController {
 
         return new ResponseEntity<>(notificacio, HttpStatus.UNAUTHORIZED);
     }
+
+    @PostMapping("/auth/admin/token")
+    public ResponseEntity<String> getToken(@RequestBody String password){
+        if(password.equals(publicPassword)){
+            Set<RolDto> rols = new HashSet<>();
+            rols.add(RolDto.ADMINISTRADOR);
+            return ResponseEntity.ok(tokenManager.createToken(administrador,rols.stream().map(Enum::toString).collect(Collectors.toList()),"admin"));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
 }
