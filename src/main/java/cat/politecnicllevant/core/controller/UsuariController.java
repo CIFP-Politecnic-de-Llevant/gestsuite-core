@@ -327,6 +327,7 @@ public class UsuariController {
         return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
     }
 
+
     @GetMapping("/usuaris/alumnes-by-codigrup/{cursgrup}")
     public ResponseEntity<List<UsuariDto>> getAlumnesByCodiGrup(@PathVariable("cursgrup") String cursGrup) {
         String codiCurs = cursGrup.substring(0, cursGrup.length() - 1);
