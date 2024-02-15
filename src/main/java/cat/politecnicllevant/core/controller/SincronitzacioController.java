@@ -1248,12 +1248,12 @@ public class SincronitzacioController {
                                 log.info("Usuari " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
                                 usuarisUpdate.add(u);
                             }
-                            usuariService.saveGestib(u, codi, nom, ap1, ap2, usuari, null, null, departament, true, false);
+                            usuariService.saveGestib(u, codi, nom, ap1, ap2, usuari, null, null, departament, true, false,null);
                         }
 
                         u = usuariService.findByGestibCodi(codi);
                         if (u == null) {
-                            usuariService.saveGestib(codi, nom, ap1, ap2, usuari, null, null, departament, true, false);
+                            usuariService.saveGestib(codi, nom, ap1, ap2, usuari, null, null, departament, true, false,null);
                         } else {
                             //Si estava inactiu i ara passa a actiu
                             if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
@@ -1295,6 +1295,7 @@ public class SincronitzacioController {
                         String ap2 = eAlumne.getAttribute("ap2");
                         String exp = eAlumne.getAttribute("expedient");
                         String grup = eAlumne.getAttribute("grup");
+                        String alumneUsuari = eAlumne.getAttribute("usuari");
 
                         //Podria passar que algú creàs a mà l'usuari a GSuite (correctament) però no haguesin passat l'xml, per tant...
                         UsuariDto u = usuariService.findByGSuitePersonalID(codi);
@@ -1314,14 +1315,14 @@ public class SincronitzacioController {
                                 usuarisUpdate.add(u);
                             }
 
-                            UsuariDto alumne = usuariService.saveGestib(u, codi, nom, ap1, ap2, null, exp, grup, null, false, true);
+                            UsuariDto alumne = usuariService.saveGestib(u, codi, nom, ap1, ap2, null, exp, grup, null, false, true,alumneUsuari);
 
                             usuariService.save(alumne);
                         }
 
                         u = usuariService.findByGestibCodi(codi);
                         if (u == null) {
-                            UsuariDto alumne = usuariService.saveGestib(codi, nom, ap1, ap2, null, exp, grup, null, false, true);
+                            UsuariDto alumne = usuariService.saveGestib(codi, nom, ap1, ap2, null, exp, grup, null, false, true,alumneUsuari);
                             //usuariService.save(alumne);
                         } else {
                             //Si estava inactiu i ara passa a actiu
@@ -1348,6 +1349,7 @@ public class SincronitzacioController {
                                 u.setGestibGrup3(grup);
                             }
                             u.setGestibExpedient(exp);
+                            u.setGestibAlumneUsuari(alumneUsuari);
                             u.setActiu(true);
                             usuariService.save(u);
                         }
@@ -2436,6 +2438,7 @@ public class SincronitzacioController {
             case "ncognom1" -> username = nom.charAt(0) + cognom1.trim();
             case "ncognom1exp" -> username = nom.charAt(0) + cognom1.trim() + usuari.getGestibExpedient();
             case "n.cognom1cognom2" -> username = nom.charAt(0) + "." + cognom1.trim() + cognom2.trim();
+            case "alumneusuari" -> username = usuari.getGestibAlumneUsuari();
             case "nmcognom1" -> {
                 String[] nomCompost = nom.split(" ");
                 StringBuilder nomCompostFinal = new StringBuilder();

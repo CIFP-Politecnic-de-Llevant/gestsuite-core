@@ -91,4 +91,7 @@ public @Data class Usuari {
 
     @Column(name = "gestib_alumne", nullable = true)
     private Boolean gestibAlumne;
+
+    @Column(name = "gestib_alumne_usuari", nullable = true)
+    private String gestibAlumneUsuari;
 }

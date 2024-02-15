@@ -34,6 +34,7 @@ public @Data class UsuariDto implements Cloneable {
     private String gestibDepartament;
     private Boolean gestibProfessor;
     private Boolean gestibAlumne;
+    private String gestibAlumneUsuari;
     private List<DispositiuDto> dispositius = new ArrayList<>();
     public UsuariDto clone() throws CloneNotSupportedException {
         return (UsuariDto) super.clone();

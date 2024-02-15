@@ -32,7 +32,7 @@ public class UsuariService {
     }
 
     @Transactional
-    public UsuariDto saveGestib(String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne) {
+    public UsuariDto saveGestib(String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne, String gestibAlumneUsuari) {
         Usuari u = new Usuari();
         u.setActiu(true);
 
@@ -46,6 +46,7 @@ public class UsuariService {
         u.setGestibGrup(grup);
         u.setGestibProfessor(esProfessor);
         u.setGestibAlumne(esAlumne);
+        u.setGestibAlumneUsuari(gestibAlumneUsuari);
         u.setGestibDepartament(departament);
 
         if(u.getBloquejaGsuiteUnitatOrganitzativa()==null){
@@ -58,7 +59,7 @@ public class UsuariService {
         return modelMapper.map(usuariSaved,UsuariDto.class);
     }
     @Transactional
-    public UsuariDto saveGestib(UsuariDto u, String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne) {
+    public UsuariDto saveGestib(UsuariDto u, String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne, String gestibAlumneUsuari) {
         u.setIdusuari(u.getIdusuari());
         u.setActiu(true);
 
@@ -78,6 +79,7 @@ public class UsuariService {
         }
         u.setGestibProfessor(esProfessor);
         u.setGestibAlumne(esAlumne);
+        u.setGestibAlumneUsuari(gestibAlumneUsuari);
         u.setGestibDepartament(departament);
 
         if(u.getBloquejaGsuiteUnitatOrganitzativa()==null){
