@@ -857,6 +857,7 @@ public class SincronitzacioController {
                         String ap2 = eAlumne.getAttribute("ap2");
                         String exp = eAlumne.getAttribute("expedient");
                         String grup = eAlumne.getAttribute("grup");
+                        String alumneusuari = eAlumne.getAttribute("usuari");
 
                         //Podria passar que algú creàs a mà l'usuari a GSuite (correctament) però no haguesin passat l'xml, per tant...
                         UsuariDto u = usuariService.findByGSuitePersonalID(codi);
@@ -930,7 +931,24 @@ public class SincronitzacioController {
                                     resultat.add(infoAlumne);
                                 }
                             } else {
-                                resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. Es crearà un compte d'usuari a GSuite");
+                                UsuariDto usuariAlumne = new UsuariDto();
+                                usuariAlumne.setGestibCodi(codi);
+                                usuariAlumne.setGestibNom(nom);
+                                usuariAlumne.setGestibCognom1(ap1);
+                                usuariAlumne.setGestibCognom2(ap2);
+                                usuariAlumne.setGestibExpedient(exp);
+                                usuariAlumne.setGestibGrup(grup);
+                                usuariAlumne.setGestibAlumne(true);
+                                usuariAlumne.setGestibProfessor(false);
+                                usuariAlumne.setActiu(true);
+                                usuariAlumne.setGestibAlumneUsuari(alumneusuari);
+
+                                String username = this.generateUsername(usuariAlumne, this.formatEmailAlumnes);
+                                if(username ==null){
+                                    resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. NO es pot crear usuari a GSuite perquè no es pot generar el nom d'usuari");
+                                } else {
+                                    resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. Es crearà un compte d'usuari a GSuite");
+                                }
                             }
                         }
 
@@ -1707,59 +1725,67 @@ public class SincronitzacioController {
                 //Username
                 String username = this.generateUsername(usuari, this.formatEmailAlumnes);
 
-                //Unitat organitzativa de l'alumne
-                GrupDto grup = grupService.findByGestibIdentificador(usuari.getGestibGrup());
-                if (grup != null) {
-                    CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
-                    String rutaUnitat = "";
-                    if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
-                        rutaUnitat = this.defaultUOAlumnes;
-                    } else {
-                        rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
-                    }
-
-                    String nom = usuari.getGestibNom();
-                    String cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
-
-                    if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2")) {
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
-                    } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
-                        if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
-                            cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                //Si no s'ha pogut crear un nom d'usuari es retorna null
+                //Per exemple: no té nom de Moodle assignat i els alumnes estan configurats amb nom de Moodle.
+                if(username != null){
+                    //Unitat organitzativa de l'alumne
+                    GrupDto grup = grupService.findByGestibIdentificador(usuari.getGestibGrup());
+                    if (grup != null) {
+                        CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
+                        String rutaUnitat = "";
+                        if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                            rutaUnitat = this.defaultUOAlumnes;
                         } else {
-                            cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
+                            rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
                         }
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
+
+                        String nom = usuari.getGestibNom();
+                        String cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+
+                        if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2")) {
+                            nom = UtilService.capitalize(nom);
+                            cognoms = UtilService.capitalize(cognoms);
+                        } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
+                            if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
+                                cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                            } else {
+                                cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
+                            }
+                            nom = UtilService.capitalize(nom);
+                            cognoms = UtilService.capitalize(cognoms);
+                        }
+
+                        log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + grup.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
+
+                        User usuariGSuite = gSuiteService.createUser(username, nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
+
+                        if (usuariGSuite != null) {
+                            log.info("Usuari" + usuariGSuite.getPrimaryEmail() + " creat correctament a GSuite com alumne");
+
+                            //Actualitzar usuari Gestib
+                            usuari.setActiu(true);
+                            usuari.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
+                            usuari.setGsuiteAdministrador(usuariGSuite.getIsAdmin());
+                            usuari.setGsuitePersonalID(usuari.getGestibCodi());
+                            usuari.setGsuiteSuspes(usuariGSuite.getSuspended());
+                            usuari.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
+                            usuari.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
+                            usuari.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
+                            usuari.setGsuiteFullName(usuariGSuite.getName().getFullName());
+
+                            usuariService.save(usuari);
+
+                            alumnesNous.add(usuari);
+                        } else {
+                            String missatge = "Error creant el correu de l'alumne " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                            log.error(missatge);
+                        }
                     }
 
-                    log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + grup.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
-
-                    User usuariGSuite = gSuiteService.createUser(username, nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
-
-                    if (usuariGSuite != null) {
-                        log.info("Usuari" + usuariGSuite.getPrimaryEmail() + " creat correctament a GSuite com alumne");
-
-                        //Actualitzar usuari Gestib
-                        usuari.setActiu(true);
-                        usuari.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
-                        usuari.setGsuiteAdministrador(usuariGSuite.getIsAdmin());
-                        usuari.setGsuitePersonalID(usuari.getGestibCodi());
-                        usuari.setGsuiteSuspes(usuariGSuite.getSuspended());
-                        usuari.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
-                        usuari.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
-                        usuari.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
-                        usuari.setGsuiteFullName(usuariGSuite.getName().getFullName());
-
-                        usuariService.save(usuari);
-
-                        alumnesNous.add(usuari);
-                    } else {
-                        String missatge = "Error creant el correu de l'alumne " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
-                        log.error(missatge);
-                    }
+                } else {
+                    log.error("Error a l'usuari: Nom d'usuari buit per " + usuari.getGestibNom() + " " + usuari.getGestibCognom1()+" "+usuari.getGestibCognom2());
                 }
+
             } else {
                 log.error("Error a l'usuari " + usuari.getGestibNom() + usuari.getGestibCognom1());
             }
@@ -2452,6 +2478,9 @@ public class SincronitzacioController {
         }
 
         username = username.trim().toLowerCase();
+
+        //Comprovació de seguretat
+        if(username.isEmpty()) return null;
 
         User u = gSuiteService.getUserById(username + domini);
 
