@@ -69,7 +69,7 @@ public class GrupController {
         List<String> rolsClaim = (List<String>)claims.get("rols");
         Set<RolDto> rols = rolsClaim.stream().map(RolDto::valueOf).collect(Collectors.toSet());
 
-        if(rols.contains(RolDto.ADMINISTRADOR)) {
+        if(rols.contains(RolDto.ADMINISTRADOR) || rols.contains(RolDto.ADMINISTRADOR_FCT) || rols.contains(RolDto.CAP_ESTUDIS) || rols.contains(RolDto.DIRECTOR)) {
             List<GrupDto> grups = grupService.findAll().stream().filter(GrupDto::getActiu).collect(Collectors.toList());
             return new ResponseEntity<>(grups, HttpStatus.OK);
         } else if (rols.contains(RolDto.PROFESSOR)) {
