@@ -129,7 +129,7 @@ public class GoogleSpreadsheetService {
 
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
 
-        ValueRange valueRange = service.spreadsheets().values().get(id, "A1:Z1000").execute();
+        ValueRange valueRange = service.spreadsheets().values().get(id, "A1:ZZ1000").execute();
         List<List<Object>> values = valueRange.getValues();
 
         List<List<String>> linies = new ArrayList<>();
