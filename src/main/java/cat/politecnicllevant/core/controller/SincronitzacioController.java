@@ -1655,9 +1655,12 @@ public class SincronitzacioController {
                 }
 
                 usuariService.save(u);
+            } else if(u != null){ //Si l'usuari no és null i entra vol dir que eliminat = true
+                u.setGsuitePersonalID(null);
+                u.setGsuiteEmail(null);
+                usuariService.save(u);
             } else {
-                //TODO: aquí hi ha un bug. Si l'usuari existeix a GSuite però està marcat com eliminat a la base de dades (eliminat=true) l'intenta crear i peta.
-                log.info("L'usuari no existeix. Creant usuari " + email + " amb clau " + personalIdKey);
+                log.info("L'usuari no existeix. Creant usuari {} amb clau {}", email, personalIdKey);
                 boolean actiu = personalIdKey == null || personalIdKey.isEmpty();
                 usuariService.saveGSuite(email, isAdmin, personalIdKey, isSuspes, unitatOrganitzativa, givenName, familyName, fullName, actiu);
             }
