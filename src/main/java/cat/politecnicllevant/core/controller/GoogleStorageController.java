@@ -32,8 +32,15 @@ public class GoogleStorageController {
     private Gson gson;
 
     @PostMapping(value = "/googlestorage/generate-signed-url")
-    public ResponseEntity<String> generateSignedURL(@RequestBody String json) throws IOException {
-        JsonObject jsonFitxerBucket = gson.fromJson(json, JsonObject.class);
+    public ResponseEntity<String> generateSignedURL(@RequestBody String json, @RequestHeader(value = "User-Agent") String ua) throws IOException {
+        JsonObject data = gson.fromJson(json, JsonObject.class);
+
+        boolean download = true;
+        if (data.get("download") != null) {
+            download = data.get("download").getAsBoolean();
+        }
+
+        JsonObject jsonFitxerBucket = data.getAsJsonObject("fitxerBucket");
 
         FitxerBucketDto fitxerBucket = new FitxerBucketDto();
         fitxerBucket.setIdfitxer(jsonFitxerBucket.get("idfitxer").getAsLong());
@@ -41,7 +48,7 @@ public class GoogleStorageController {
         fitxerBucket.setPath(jsonFitxerBucket.get("path").getAsString());
         fitxerBucket.setBucket(jsonFitxerBucket.get("bucket").getAsString());
 
-        String url = googleStorageService.generateV4GetObjectSignedUrl(fitxerBucket);
+        String url = googleStorageService.generateV4GetObjectSignedUrl(fitxerBucket, download, ua);
         return new ResponseEntity<>(url, HttpStatus.OK);
     }
 
