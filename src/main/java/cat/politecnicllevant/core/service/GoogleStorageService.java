@@ -17,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 
@@ -63,7 +64,7 @@ public class GoogleStorageService {
         return fitxerBucket;
     }
 
-    public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket) throws StorageException, IOException {
+    public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket, boolean withDownload, String ua) throws StorageException, IOException {
         String projectId = this.projectId;
         String bucketName = fitxerBucket.getBucket();
         String objectName = fitxerBucket.getPath();
@@ -76,7 +77,34 @@ public class GoogleStorageService {
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
-        URL url = storage.signUrl(blobInfo, 60, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
+        URL url;
+
+        // headers per evitar descàrrega automàtica (firefox és un cas a part)
+        if (withDownload) {
+            if (ua.contains("Firefox")) {
+                HashMap<String, String> params = new HashMap<>();
+                params.put("response-content-disposition", "attachment");
+
+                url = storage.signUrl(blobInfo, 60, TimeUnit.MINUTES,
+                        Storage.SignUrlOption.withQueryParams(params),
+                        Storage.SignUrlOption.withV4Signature()
+                );
+            }
+            else {
+                url = storage.signUrl(blobInfo, 60, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
+            }
+        }
+        else {
+            HashMap<String, String> params = new HashMap<>();
+            params.put("response-content-disposition", "inline");
+            params.put("response-content-type", "application/pdf");
+
+            url = storage.signUrl(blobInfo, 60, TimeUnit.MINUTES,
+                    Storage.SignUrlOption.withQueryParams(params),
+                    Storage.SignUrlOption.withV4Signature()
+            );
+        }
+
         System.out.println("Generated GET signed URL:");
         System.out.println(url);
 
@@ -95,4 +123,3 @@ public class GoogleStorageService {
 
 
 }
-
