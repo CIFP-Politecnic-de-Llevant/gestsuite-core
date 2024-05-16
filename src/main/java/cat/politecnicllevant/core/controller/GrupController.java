@@ -7,6 +7,7 @@ import cat.politecnicllevant.core.dto.gestib.CursDto;
 import cat.politecnicllevant.core.dto.gestib.GrupDto;
 import cat.politecnicllevant.core.dto.gestib.RolDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariDto;
+import cat.politecnicllevant.core.model.gestib.Curs;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.User;
 import com.google.gson.Gson;
@@ -103,6 +104,19 @@ public class GrupController {
     @GetMapping("/grup/getById/{idgrup}")
     public ResponseEntity<GrupDto> getById(@PathVariable("idgrup") Long idgrup){
         GrupDto grup = grupService.findById(idgrup);
+        return new ResponseEntity<>(grup, HttpStatus.OK);
+    }
+
+    @GetMapping("/grup/getByCodigrup/{codigrup}")
+    public ResponseEntity<GrupDto> getByCodigrup(@PathVariable String codigrup) {
+        String gestibNom = codigrup.substring(0, codigrup.length() - 1);
+        String gestibIdentificador = cursService.findByGestibNom(gestibNom).get(0).getGestibIdentificador();
+
+        GrupDto grup = grupService.findByGestibNomAndCurs(
+                String.valueOf(codigrup.charAt(codigrup.length() - 1)),
+                gestibIdentificador
+        ).get(0);
+
         return new ResponseEntity<>(grup, HttpStatus.OK);
     }
 
