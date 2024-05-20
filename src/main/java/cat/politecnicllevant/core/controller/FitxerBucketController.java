@@ -61,6 +61,11 @@ public class FitxerBucketController {
         return new ResponseEntity<>(path, HttpStatus.OK);
     }
 
+    /*@GetMapping("/fitxerbucket/signatures/{id}")
+    public ResponseEntity<String> getSignatures(@PathVariable("id") String id) {
+        System.out.println(id);
+    }*/
+
     private String saveUploadedFiles(final MultipartFile file) throws IOException {
 
         Date ara = new Date();
