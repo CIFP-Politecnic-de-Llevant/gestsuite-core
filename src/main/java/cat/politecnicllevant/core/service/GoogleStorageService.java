@@ -5,6 +5,7 @@ import com.google.api.services.storage.StorageScopes;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.*;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
@@ -21,6 +22,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
@@ -78,21 +80,25 @@ public class GoogleStorageService {
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
 
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
-        Blob blob = storage.get(BlobId.of(bucketName, objectName));
+        /*Blob blob = storage.get(BlobId.of(bucketName, objectName));
         if (blob == null) {
             throw new FileNotFoundException("No such object exists in the bucket");
-        }
+        }*/
 
         // Ensure binary integrity by downloading the blob content as a byte array first
-        byte[] blobContent = blob.getContent();
-        Files.write(Paths.get(destFilePath), blobContent);
+        //byte[] blobContent = blob.getContent();
+        //Files.write(Paths.get(destFilePath), blobContent);
 
-        //Blob blob = storage.get(BlobId.of(bucketName, objectName));
-        //System.out.println(blob);
-        //blob.downloadTo(Paths.get(destFilePath));
+        Blob blob = storage.get(BlobId.of(bucketName, objectName));
+        System.out.println(blob);
+        /*Path path = Paths.get(destFilePath);
+        if (Files.exists(path))
+            Files.delete(path);
 
-        //File document = new File(destFilePath);
-        //PDDocument pdf = Loader.loadPDF(document);
+        blob.downloadTo(path);*/
+
+        File document = new File(destFilePath);
+        PDDocument pdf = Loader.loadPDF(document);
         /*PDDocument pdf = PDDocument.load(new FileInputStream(destFilePath));
 
         System.out.println("pgs: " + pdf.getNumberOfPages());
@@ -105,13 +111,13 @@ public class GoogleStorageService {
 
         System.out.println("trailer: " + trailer);
         System.out.println("catalog: " + catalog);
-        System.out.println("acro: " + acroForm);
+        System.out.println("acro: " + acroForm);*/
 
 
-        System.out.println(pdf.isEncrypted());
+        //System.out.println(pdf.isEncrypted());
 
         // Check for annotations
-        for (int i = 0; i < pdf.getNumberOfPages(); i++) {
+        /*for (int i = 0; i < pdf.getNumberOfPages(); i++) {
             COSDictionary pageDict = pdf.getPage(i).getCOSObject();
             COSArray annots = (COSArray) pageDict.getDictionaryObject(COSName.ANNOTS);
             if (annots != null) {
@@ -123,7 +129,7 @@ public class GoogleStorageService {
         }*/
 
 
-        return null;
+        return pdf;
     }
 
     public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket, boolean withDownload, String ua) throws StorageException, IOException {

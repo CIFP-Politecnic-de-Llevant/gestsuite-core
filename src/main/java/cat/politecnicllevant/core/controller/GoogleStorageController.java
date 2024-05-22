@@ -2,7 +2,6 @@ package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.core.dto.google.FitxerBucketDto;
 import cat.politecnicllevant.core.service.GoogleStorageService;
-import cat.politecnicllevant.core.service.PdfService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -10,8 +9,17 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.signatures.PdfSignature;
 import com.itextpdf.signatures.SignatureUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
+import org.bouncycastle.asn1.pkcs.EncryptedData;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cms.CMSException;
+import org.bouncycastle.cms.CMSSignedData;
+import org.bouncycastle.cms.SignerInformation;
+import org.bouncycastle.cms.SignerInformationStore;
+import org.bouncycastle.util.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @RestController
 public class GoogleStorageController {
@@ -39,9 +44,6 @@ public class GoogleStorageController {
 
     @Autowired
     private Gson gson;
-
-    @Autowired
-    private PdfService pdfService;
 
     @PostMapping(value = "/googlestorage/generate-signed-url")
     public ResponseEntity<String> generateSignedURL(@RequestBody String json, @RequestHeader(value = "User-Agent") String ua) throws IOException {
@@ -72,41 +74,45 @@ public class GoogleStorageController {
     }
 
     @PostMapping("/googlestorage/signatures")
-    public ResponseEntity<List<String>> getSignatures(@RequestBody String json) throws IOException {
+    public ResponseEntity<List<String>> getSignatures(@RequestBody String json) throws IOException, CMSException {
         JsonObject data = gson.fromJson(json, JsonObject.class);
-
         String bucket = data.get("bucket").getAsString();
         String file = data.get("nom").getAsString().split("/")[2];
         String destPath = bucket + file;
         String path = data.get("path").getAsString();
+        PDDocument pdf = googleStorageService.downloadObject(bucket, path, destPath);
 
-        googleStorageService.downloadObject(bucket, path, destPath);
-        /*File f = new File(destPath);
-        PdfDocument pdfDoc = new PdfDocument(new PdfReader(f));
+        List<String> names = new ArrayList<>();
+        for (PDSignature signature : pdf.getSignatureDictionaries()) {
 
-        SignatureUtil signUtil = new SignatureUtil(pdfDoc);
-        List<String> names = signUtil.getSignatureNames();
-        System.out.println("Number of signatures: " + names.size());
+            COSDictionary sigDict = signature.getCOSObject();
+            for (COSName key : sigDict.keySet()) {
+                if (key.getName().equals("Contents")) {
+                    COSString cos = (COSString) sigDict.getDictionaryObject(key);
+                    CMSSignedData signedData = new CMSSignedData(cos.getBytes());
+                    List<SignerInformation> signers = signedData.getSignerInfos().getSigners().stream().toList();
 
-        for (String name : names) {
-            PdfSignature signature = signUtil.getSignature(name);
-            System.out.println("Signature Name: " + name);
-            System.out.println("Signature Date: " + signature.getDate());
-            System.out.println("Signature Reason: " + signature.getReason());
-        }*/
+                    Store<X509CertificateHolder> certs = signedData.getCertificates();
+                    for (SignerInformation signer : signers) {
+                        Collection<X509CertificateHolder> certCollection = certs.getMatches(signer.getSID());
+                        for (X509CertificateHolder certHolder : certCollection) {
+                            List<String> signerInfo = Arrays.stream(
+                                    certHolder.getSubject().toString().split(","))
+                                    .filter(s -> s.contains("GIVENNAME") || s.contains("SURNAME"))
+                                    .toList();
+                            String fullName = signerInfo.get(0)
+                                    .substring(signerInfo.get(0).indexOf("=") + 1).concat(signerInfo.get(1)
+                                                    .substring(signerInfo.get(1).indexOf("=") + 1));
 
+                            names.add(fullName);
+                        }
+                    }
+                }
+            }
+        }
+        pdf.close();
 
-
-        //List<String> names = new ArrayList<>();
-
-        /*for (PDSignature signature : pdf.getSignatureDictionaries()) {
-            names.add(signature.getName());
-            System.out.println(signature.getName());
-        }*/
-
-        //pdfDoc.close();
-
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(names, HttpStatus.OK);
     }
 
     @PostMapping("/googlestorage/delete")
