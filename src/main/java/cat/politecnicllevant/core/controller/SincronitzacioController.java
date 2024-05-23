@@ -2331,7 +2331,7 @@ public class SincronitzacioController {
                                     cognoms = UtilService.capitalize(cognoms);
                                 }
 
-                                if (!usuari.getGsuiteGivenName().equals(nom) || !usuari.getGsuiteFamilyName().equals(cognoms)) {
+                                if (usuari.getGsuiteGivenName() == null || usuari.getGsuiteFamilyName() == null || !usuari.getGsuiteGivenName().equals(nom) || !usuari.getGsuiteFamilyName().equals(cognoms)) {
                                     User usuariGSuite = gSuiteService.updateUser(usuari.getGsuiteEmail(), nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
 
                                     if (usuariGSuite != null) {
