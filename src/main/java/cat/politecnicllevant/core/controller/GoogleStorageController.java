@@ -2,17 +2,12 @@ package cat.politecnicllevant.core.controller;
 
 import cat.politecnicllevant.core.dto.google.FitxerBucketDto;
 import cat.politecnicllevant.core.service.GoogleStorageService;
+import cat.politecnicllevant.core.service.pdfbox.PdfService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.apache.pdfbox.cos.*;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
-import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSSignedData;
-import org.bouncycastle.cms.SignerInformation;
-import org.bouncycastle.util.Store;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +19,18 @@ import java.util.*;
 
 @RestController
 public class GoogleStorageController {
+    private final GoogleStorageService googleStorageService;
+    private final Gson gson;
+    private final PdfService pdfService;
 
-    @Autowired
-    private GoogleStorageService googleStorageService;
-
-    @Autowired
-    private Gson gson;
+    public GoogleStorageController(
+            GoogleStorageService googleStorageService,
+            Gson gson,
+            PdfService pdfService) {
+        this.googleStorageService = googleStorageService;
+        this.gson = gson;
+        this.pdfService = pdfService;
+    }
 
     @PostMapping(value = "/googlestorage/generate-signed-url")
     public ResponseEntity<String> generateSignedURL(@RequestBody String json, @RequestHeader(value = "User-Agent") String ua) throws IOException {
@@ -66,36 +67,12 @@ public class GoogleStorageController {
         String file = data.get("nom").getAsString().split("/")[2];
         String destPath = "/tmp/" + bucket + LocalDate.now() + "-" + file;
         String path = data.get("path").getAsString();
-        PDDocument pdf = googleStorageService.downloadObject(bucket, path, destPath);
 
-        List<String> names = new ArrayList<>();
-        for (PDSignature signature : pdf.getSignatureDictionaries()) {
+        googleStorageService.downloadObject(bucket, path, destPath);
 
-            COSDictionary sigDict = signature.getCOSObject();
-            for (COSName key : sigDict.keySet()) {
-                if (key.getName().equals("Contents")) {
-                    COSString cos = (COSString) sigDict.getDictionaryObject(key);
-                    CMSSignedData signedData = new CMSSignedData(cos.getBytes());
-                    List<SignerInformation> signers = signedData.getSignerInfos().getSigners().stream().toList();
-
-                    Store<X509CertificateHolder> certs = signedData.getCertificates();
-                    for (SignerInformation signer : signers) {
-                        Collection<X509CertificateHolder> certCollection = certs.getMatches(signer.getSID());
-                        for (X509CertificateHolder certHolder : certCollection) {
-                            List<String> signerInfo = Arrays.stream(
-                                    certHolder.getSubject().toString().split(","))
-                                    .filter(s -> s.contains("GIVENNAME") || s.contains("SURNAME"))
-                                    .toList();
-                            String fullName = signerInfo.get(0)
-                                    .substring(signerInfo.get(0).indexOf("=") + 1).concat(" "+ signerInfo.get(1)
-                                                    .substring(signerInfo.get(1).indexOf("=") + 1));
-
-                            names.add(fullName);
-                        }
-                    }
-                }
-            }
-        }
+        File document = new File(destPath);
+        PDDocument pdf = Loader.loadPDF(document);
+        List<String> names = pdfService.getSignatureNames(pdf);
         pdf.close();
 
         return new ResponseEntity<>(names, HttpStatus.OK);

@@ -5,8 +5,6 @@ import com.google.api.services.storage.StorageScopes;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.*;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -64,16 +62,14 @@ public class GoogleStorageService {
         return fitxerBucket;
     }
 
-    public PDDocument downloadObject(String bucketName, String objectName, String destFilePath) throws IOException {
+    public void downloadObject(String bucketName, String objectName, String destFilePath) throws IOException {
         String[] scopes = {StorageScopes.DEVSTORAGE_READ_WRITE};
-        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile))
+                .createScoped(scopes).createDelegated(this.adminUser);
 
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         Blob blob = storage.get(BlobId.of(bucketName, objectName));
         blob.downloadTo(Paths.get(destFilePath));
-
-        File document = new File(destFilePath);
-        return Loader.loadPDF(document);
     }
 
     public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket, boolean withDownload, String ua) throws StorageException, IOException {
