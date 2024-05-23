@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
 import java.util.*;
 
 @RestController
@@ -63,7 +64,7 @@ public class GoogleStorageController {
         JsonObject data = gson.fromJson(json, JsonObject.class);
         String bucket = data.get("bucket").getAsString();
         String file = data.get("nom").getAsString().split("/")[2];
-        String destPath = bucket + file;
+        String destPath = "/tmp/" + bucket + LocalDate.now() + "-" + file;
         String path = data.get("path").getAsString();
         PDDocument pdf = googleStorageService.downloadObject(bucket, path, destPath);
 
