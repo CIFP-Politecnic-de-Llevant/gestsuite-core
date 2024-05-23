@@ -201,29 +201,11 @@
 			<artifactId>bcpkix-jdk18on</artifactId>
 			<version>1.76</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcmail-jdk18on</artifactId>
 			<version>1.76</version>
 		</dependency>
-
-
-		<!-- https://mvnrepository.com/artifact/com.itextpdf/itext-core -->
-		<dependency>
-			<groupId>com.itextpdf</groupId>
-			<artifactId>itext-core</artifactId>
-			<version>8.0.4</version>
-			<type>pom</type>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.pdfbox</groupId>
-			<artifactId>pdfbox-tools</artifactId>
-			<version>2.0.0</version>
-		</dependency>
-
-
 
 		<dependency>
 			<groupId>cat.politecnicllevant</groupId>
