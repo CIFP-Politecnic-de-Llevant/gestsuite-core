@@ -101,7 +101,7 @@ public class GoogleStorageController {
                                     .filter(s -> s.contains("GIVENNAME") || s.contains("SURNAME"))
                                     .toList();
                             String fullName = signerInfo.get(0)
-                                    .substring(signerInfo.get(0).indexOf("=") + 1).concat(signerInfo.get(1)
+                                    .substring(signerInfo.get(0).indexOf("=") + 1).concat(" "+ signerInfo.get(1)
                                                     .substring(signerInfo.get(1).indexOf("=") + 1));
 
                             names.add(fullName);

@@ -80,56 +80,11 @@ public class GoogleStorageService {
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
 
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
-        /*Blob blob = storage.get(BlobId.of(bucketName, objectName));
-        if (blob == null) {
-            throw new FileNotFoundException("No such object exists in the bucket");
-        }*/
-
-        // Ensure binary integrity by downloading the blob content as a byte array first
-        //byte[] blobContent = blob.getContent();
-        //Files.write(Paths.get(destFilePath), blobContent);
-
         Blob blob = storage.get(BlobId.of(bucketName, objectName));
-        System.out.println(blob);
-        /*Path path = Paths.get(destFilePath);
-        if (Files.exists(path))
-            Files.delete(path);
-
-        blob.downloadTo(path);*/
+        blob.downloadTo(Paths.get(destFilePath));
 
         File document = new File(destFilePath);
-        PDDocument pdf = Loader.loadPDF(document);
-        /*PDDocument pdf = PDDocument.load(new FileInputStream(destFilePath));
-
-        System.out.println("pgs: " + pdf.getNumberOfPages());
-        System.out.println(pdf.getSignatureDictionaries().size());
-
-        //PDAcroForm acroForm = pdf.getDocumentCatalog().getAcroForm();
-        COSDictionary trailer = pdf.getDocument().getTrailer();
-        COSDictionary catalog = (COSDictionary) trailer.getDictionaryObject(COSName.ROOT);
-        COSDictionary acroForm = (COSDictionary) catalog.getDictionaryObject(COSName.ACRO_FORM);
-
-        System.out.println("trailer: " + trailer);
-        System.out.println("catalog: " + catalog);
-        System.out.println("acro: " + acroForm);*/
-
-
-        //System.out.println(pdf.isEncrypted());
-
-        // Check for annotations
-        /*for (int i = 0; i < pdf.getNumberOfPages(); i++) {
-            COSDictionary pageDict = pdf.getPage(i).getCOSObject();
-            COSArray annots = (COSArray) pageDict.getDictionaryObject(COSName.ANNOTS);
-            if (annots != null) {
-                for (int j = 0; j < annots.size(); j++) {
-                    COSDictionary annot = (COSDictionary) annots.getObject(j);
-                    System.out.println("Annotation: " + annot);
-                }
-            }
-        }*/
-
-
-        return pdf;
+        return Loader.loadPDF(document);
     }
 
     public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket, boolean withDownload, String ua) throws StorageException, IOException {
