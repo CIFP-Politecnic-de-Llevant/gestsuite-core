@@ -8,13 +8,11 @@ import com.google.cloud.storage.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -36,7 +34,7 @@ public class GoogleStorageService {
 
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         BlobId blobId = BlobId.of(bucketName, objectName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/pdf").build();
 
         //Per arxius petits podem fer simplement un storage.create
         //storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));
@@ -62,6 +60,16 @@ public class GoogleStorageService {
         fitxerBucket.setDataCreacio(ara);
 
         return fitxerBucket;
+    }
+
+    public void downloadObject(String bucketName, String objectName, String destFilePath) throws IOException {
+        String[] scopes = {StorageScopes.DEVSTORAGE_READ_WRITE};
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile))
+                .createScoped(scopes).createDelegated(this.adminUser);
+
+        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
+        Blob blob = storage.get(BlobId.of(bucketName, objectName));
+        blob.downloadTo(Paths.get(destFilePath));
     }
 
     public String generateV4GetObjectSignedUrl(FitxerBucketDto fitxerBucket, boolean withDownload, String ua) throws StorageException, IOException {
