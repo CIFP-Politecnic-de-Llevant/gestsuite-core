@@ -12,14 +12,11 @@ import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.util.Store;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class PdfService {
-    public List<String> getSignatureNames(PDDocument pdf) throws CMSException {
+    public Set<String> getSignatureNames(PDDocument pdf) throws CMSException {
         List<String> names = new ArrayList<>();
         for (PDSignature signature : pdf.getSignatureDictionaries()) {
 
@@ -51,6 +48,6 @@ public class PdfService {
                 }
             }
         }
-        return names;
+        return new HashSet<>(names);
     }
 }

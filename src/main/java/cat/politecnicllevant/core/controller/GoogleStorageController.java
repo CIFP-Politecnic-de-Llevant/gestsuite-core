@@ -61,7 +61,7 @@ public class GoogleStorageController {
     }
 
     @PostMapping("/googlestorage/signatures")
-    public ResponseEntity<List<String>> getSignatures(@RequestBody String json) throws IOException, CMSException {
+    public ResponseEntity<Set<String>> getSignatures(@RequestBody String json) throws IOException, CMSException {
         JsonObject data = gson.fromJson(json, JsonObject.class);
         String bucket = data.get("bucket").getAsString();
         String file = data.get("nom").getAsString().split("/")[2];
@@ -72,7 +72,7 @@ public class GoogleStorageController {
 
         File document = new File(destPath);
         PDDocument pdf = Loader.loadPDF(document);
-        List<String> names = pdfService.getSignatureNames(pdf);
+        Set<String> names = pdfService.getSignatureNames(pdf);
         pdf.close();
 
         return new ResponseEntity<>(names, HttpStatus.OK);
