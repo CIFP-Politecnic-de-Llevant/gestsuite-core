@@ -3,8 +3,10 @@ package cat.politecnicllevant.core.controller;
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.core.dto.gestib.CentreDto;
+import cat.politecnicllevant.core.dto.gestib.UsuariDto;
 import cat.politecnicllevant.core.service.CentreService;
 import cat.politecnicllevant.core.service.GMailService;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.mail.MessagingException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -49,6 +52,12 @@ public class CentreController {
         CentreDto p = centreService.findByIdentificador(identificador);
         return new ResponseEntity<>(p, HttpStatus.OK);
     }*/
+
+    @GetMapping("/centre")
+    public ResponseEntity<CentreDto> getCentre() {
+        CentreDto c = centreService.findAll().get(0);
+        return new ResponseEntity<>(c, HttpStatus.OK);
+    }
 
     @GetMapping("/centre/password-inicial")
     public ResponseEntity<String> getPasswordInicial() {

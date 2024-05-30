@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class UsuariService {
     }
 
     @Transactional
-    public UsuariDto saveGestib(String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne) {
+    public UsuariDto saveGestib(String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne, String gestibAlumneUsuari) {
         Usuari u = new Usuari();
         u.setActiu(true);
 
@@ -45,6 +46,7 @@ public class UsuariService {
         u.setGestibGrup(grup);
         u.setGestibProfessor(esProfessor);
         u.setGestibAlumne(esAlumne);
+        u.setGestibAlumneUsuari(gestibAlumneUsuari);
         u.setGestibDepartament(departament);
 
         if(u.getBloquejaGsuiteUnitatOrganitzativa()==null){
@@ -57,7 +59,7 @@ public class UsuariService {
         return modelMapper.map(usuariSaved,UsuariDto.class);
     }
     @Transactional
-    public UsuariDto saveGestib(UsuariDto u, String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne) {
+    public UsuariDto saveGestib(UsuariDto u, String codi, String nom, String cognom1, String cognom2, String username, String expedient, String grup, String departament, Boolean esProfessor, Boolean esAlumne, String gestibAlumneUsuari) {
         u.setIdusuari(u.getIdusuari());
         u.setActiu(true);
 
@@ -77,6 +79,7 @@ public class UsuariService {
         }
         u.setGestibProfessor(esProfessor);
         u.setGestibAlumne(esAlumne);
+        u.setGestibAlumneUsuari(gestibAlumneUsuari);
         u.setGestibDepartament(departament);
 
         if(u.getBloquejaGsuiteUnitatOrganitzativa()==null){
@@ -153,6 +156,15 @@ public class UsuariService {
         return null;
     }
 
+    public UsuariDto findUsuariByGestibExpedient(String expedient) {
+        ModelMapper modelMapper = new ModelMapper();
+        Usuari usuari = usuariRepository.findUsuariByGestibExpedientAndActiuIsTrueAndGestibAlumneIsTrue(expedient);
+        if(usuari!=null) {
+            return modelMapper.map(usuari, UsuariDto.class);
+        }
+        return null;
+    }
+
     /**
      * Cerquem primer per codi i si no existeix per email
      */
@@ -170,6 +182,57 @@ public class UsuariService {
             return modelMapper.map(usuari, UsuariDto.class);
         }
         return null;
+    }
+
+    public List<UsuariDto> findByNomCognom1Cognom2(String nom, String cognom1, String cognom2) {
+        List<Usuari> usuaris = usuariRepository.findAll();
+        ModelMapper modelMapper = new ModelMapper();
+        return usuaris.stream()
+                .filter(u -> {
+                    String gSuiteNom = "";
+                    String gSuiteCognoms = "";
+                    String gSuiteNomComplet = "";
+
+                    String gestibNom = "";
+                    String gestibCognom1 = "";
+                    String gestibCognom2 = "";
+
+                    String paramNom = removeAccents(nom.toUpperCase().trim());
+                    String paramCognom1 = removeAccents(cognom1.toUpperCase().trim());
+                    String paramCognom2 = removeAccents(cognom2.toUpperCase().trim());
+
+                    if (u.getGsuiteGivenName() != null) {
+                        gSuiteNom = removeAccents(u.getGsuiteGivenName().toUpperCase().trim());
+                    }
+                    if (u.getGsuiteFamilyName() != null) {
+                        gSuiteCognoms = removeAccents(u.getGsuiteFamilyName().toUpperCase().trim());
+                    }
+                    if (u.getGsuiteFullName() != null) {
+                        gSuiteNomComplet = removeAccents(u.getGsuiteFullName().toUpperCase().trim());
+                    }
+
+                    if (u.getGestibNom() != null) {
+                        gestibNom = removeAccents(u.getGestibNom().toUpperCase().trim());
+                    }
+                    if (u.getGestibCognom1() != null) {
+                        gestibCognom1 = removeAccents(u.getGestibCognom1().toUpperCase().trim());
+                    }
+                    if (u.getGestibCognom2() != null) {
+                        gestibCognom2 = removeAccents(u.getGestibCognom2().toUpperCase().trim());
+                    }
+
+                    boolean nomComplet1 = (gSuiteNom+gSuiteCognoms).trim().equals((paramNom+paramCognom1+paramCognom2).trim());
+                    boolean nomComplet2 = (gSuiteNomComplet).trim().equals((paramNom+paramCognom1+paramCognom2).trim());
+                    boolean nomComplet3 = (gSuiteNomComplet).trim().equals((paramNom+" "+paramCognom1+" "+paramCognom2).trim());
+                    boolean nomComplet4 = (gSuiteNomComplet).trim().equals((paramCognom1+" "+paramCognom2 + " "+paramNom).trim());
+                    boolean nomComplet5 = (gSuiteNomComplet).trim().equals((paramCognom1+" "+paramCognom2 + ", "+paramNom).trim());
+
+                    boolean nomComplet6 = (paramNom+paramCognom1+paramCognom2).trim().equals((gestibNom+gestibCognom1+gestibCognom2).trim());
+
+                    return nomComplet1 || nomComplet2 || nomComplet3 || nomComplet4 || nomComplet5 || nomComplet6;
+                })
+                .map(u -> modelMapper.map(u, UsuariDto.class))
+                .collect(Collectors.toList());
     }
 
     public List<UsuariDto> findAll() {
@@ -260,6 +323,14 @@ public class UsuariService {
         ModelMapper modelMapper = new ModelMapper();
         Usuari u = modelMapper.map(usuari,Usuari.class);
         usuariRepository.save(u);
+    }
+
+    private String removeAccents(String input) {
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        String accentRemoved = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        accentRemoved = accentRemoved.replaceAll("'", "");
+        accentRemoved = accentRemoved.replaceAll("\\s", "");
+        return accentRemoved;
     }
 }
 

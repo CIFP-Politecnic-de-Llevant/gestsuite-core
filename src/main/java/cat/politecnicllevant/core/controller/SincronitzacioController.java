@@ -4,10 +4,8 @@ import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.*;
-import cat.politecnicllevant.core.dto.gestib.*;
 import cat.politecnicllevant.core.dto.google.GrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuTipusDto;
-import cat.politecnicllevant.core.service.*;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.Group;
@@ -176,7 +174,8 @@ public class SincronitzacioController {
             }
 
             // Passam l'arxiu a dins una carpeta
-            String fileName = this.tmpPath + "/arxiu.xml";
+            CentreDto centreBBDD = centreService.findAll().get(0);
+            String fileName = this.tmpPath + "/arxiu-" + centreBBDD.getIdentificador() + ".xml";
 
             OutputStream outputStream = new FileOutputStream(fileName);
             os.writeTo(outputStream);
@@ -294,6 +293,196 @@ public class SincronitzacioController {
             }
         }
          */
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Usuaris de GSuite importats correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/sync/mergegsuitegestib")
+    public ResponseEntity<Notificacio> getGSuiteAngGestibUsers() throws InterruptedException {
+        List<UsuariDto> usuaris = usuariService.findAll();
+        List<User> usuarisGSuite = gSuiteService.getUsers();
+
+        List<CentreDto> centres = centreService.findAll();
+        CentreDto centre = centres.get(0);
+
+
+        //Copy every GSuite users to database
+        for (User usuariGSuite : usuarisGSuite) {
+            boolean trobat = false;
+            for (UsuariDto usuari : usuaris) {
+                if (usuari.getGsuiteEmail().equals(usuariGSuite.getPrimaryEmail())) {
+                    trobat = true;
+                    break;
+                }
+            }
+            if (!trobat) {
+                UsuariDto usuariDto = usuariService.findByEmail(usuariGSuite.getPrimaryEmail());
+                if (usuariDto == null) {
+                    usuariDto = new UsuariDto();
+                }
+
+                String personalID = "";
+
+                try {
+                    List<ArrayMap> list = (List<ArrayMap>) usuariGSuite.getExternalIds();
+                    ArrayMap userKey = list.stream().filter(u -> u.get("type").equals("organization")).findFirst().orElse(null);
+                    personalID = (String) userKey.get("value");
+                } catch (Exception e) {
+                }
+
+                usuariDto.setActiu(true);
+                usuariDto.setBloquejaGsuiteUnitatOrganitzativa(false);
+                usuariDto.setGsuiteAdministrador(false);
+                usuariDto.setGsuiteEliminat(false);
+                usuariDto.setGsuiteFullName(usuariGSuite.getName().getFullName());
+                usuariDto.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
+                usuariDto.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
+                usuariDto.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
+                usuariDto.setGsuitePersonalID(personalID);
+                usuariDto.setGsuiteSuspes(false);
+                usuariDto.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
+
+                usuariService.save(usuariDto);
+            }
+        }
+
+
+        //Update every GSuite users to database
+        String fileName = this.tmpPath + "/arxiu-" + centre.getIdentificador() + ".xml";
+        List<String> resultat = new ArrayList<>();
+
+        File f = new File(fileName);
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        Document doc;
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            doc = db.parse(f);
+            doc.getDocumentElement().normalize();
+
+            log.info("LLegint el XML del Centre: " + centre.getNom());
+            log.info("Mesclant usuaris...");
+
+            //Professors
+            resultat.add("<h3>PROFESSORAT</h3>");
+            resultat.add("");
+
+            NodeList nodesProfessor = doc.getElementsByTagName("PROFESSOR");
+            resultat.add("Professors a mesclar: " + nodesProfessor.getLength());
+            int mesclats = 0;
+            for (int i = 0; i < nodesProfessor.getLength(); i++) {
+                Node node = nodesProfessor.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eProfe = (Element) node;
+                    String codi = eProfe.getAttribute("codi");
+                    String nom = eProfe.getAttribute("nom");
+                    String ap1 = eProfe.getAttribute("ap1");
+                    String ap2 = eProfe.getAttribute("ap2");
+                    String usuari = eProfe.getAttribute("username");
+                    String departament = eProfe.getAttribute("departament");
+
+                    //Search by Gestib Code
+                    UsuariDto u = usuariService.findByGSuitePersonalID(codi);
+                    if (u == null && !nom.isEmpty() && !ap1.isEmpty()) {
+                        //Try to associate to a user by Name and Surname
+                        List<UsuariDto> usuarisCandidats = usuariService.findByNomCognom1Cognom2(nom, ap1, ap2);
+                        if (usuarisCandidats.size() == 1) {
+                            u = usuarisCandidats.get(0);
+                            u.setGestibCodi(codi);
+                            u.setGsuitePersonalID(codi);
+                            usuariService.save(u);
+
+                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                            gSuiteService.updateUser(
+                                    gsuiteUser.getPrimaryEmail(),
+                                    gsuiteUser.getName().getGivenName(),
+                                    gsuiteUser.getName().getFamilyName(),
+                                    codi,
+                                    gsuiteUser.getOrgUnitPath()
+                            );
+
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                            mesclats++;
+                        } else if (usuarisCandidats.size() > 1) {
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
+                            for (UsuariDto usuariCandidat : usuarisCandidats) {
+                                resultat.add("Usuari candidat: " + usuariCandidat.getGsuiteEmail() + " - " + usuariCandidat.getGsuiteGivenName() + " " + usuariCandidat.getGsuiteFamilyName());
+                            }
+                            resultat.add("");
+                        } else {
+                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no existeix, s'ha d'introduir a mà.");
+                        }
+                    }
+                }
+            }
+            resultat.add("Professors mesclats: " + mesclats+"/"+nodesProfessor.getLength());
+
+
+            //Alumnes
+            resultat.add("<h3>ALUMNAT</h3>");
+            resultat.add("");
+
+            NodeList nodesAlumne = doc.getElementsByTagName("ALUMNE");
+            resultat.add("Alumnes a mesclar: " + nodesAlumne.getLength());
+            mesclats = 0;
+            for (int i = 0; i < nodesAlumne.getLength(); i++) {
+                Node node = nodesAlumne.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eAlumne = (Element) node;
+                    String codi = eAlumne.getAttribute("codi");
+                    String nom = eAlumne.getAttribute("nom");
+                    String ap1 = eAlumne.getAttribute("ap1");
+                    String ap2 = eAlumne.getAttribute("ap2");
+                    String exp = eAlumne.getAttribute("expedient");
+                    String grup = eAlumne.getAttribute("grup");
+
+                    //Search by Gestib Code
+                    UsuariDto u = usuariService.findByGSuitePersonalID(codi);
+                    if (u == null && !nom.isEmpty() && !ap1.isEmpty()){
+                        //Try to associate to a user by Name and Surname
+                        List<UsuariDto> usuarisCandidats = usuariService.findByNomCognom1Cognom2(nom, ap1, ap2);
+                        if (usuarisCandidats.size() == 1) {
+                            u = usuarisCandidats.get(0);
+                            u.setGestibCodi(codi);
+                            u.setGsuitePersonalID(codi);
+                            usuariService.save(u);
+
+                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                            gSuiteService.updateUser(
+                                    gsuiteUser.getPrimaryEmail(),
+                                    gsuiteUser.getName().getGivenName(),
+                                    gsuiteUser.getName().getFamilyName(),
+                                    codi,
+                                    gsuiteUser.getOrgUnitPath()
+                            );
+
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                            mesclats++;
+                        } else if (usuarisCandidats.size() > 1) {
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
+                            for (UsuariDto usuariCandidat : usuarisCandidats) {
+                                resultat.add("Usuari candidat: " + usuariCandidat.getGsuiteEmail() + " - " + usuariCandidat.getGsuiteGivenName() + " " + usuariCandidat.getGsuiteFamilyName());
+                            }
+                            resultat.add("");
+                        } else {
+                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no existeix, s'ha d'introduir a mà.");
+                        }
+                    }
+                }
+            }
+            resultat.add("Alumnes mesclats: " + mesclats+"/"+nodesAlumne.getLength());
+
+            //Result
+            for(String r: resultat){
+                System.out.println(r);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         Notificacio notificacio = new Notificacio();
         notificacio.setNotifyMessage("Usuaris de GSuite importats correctament");
@@ -502,6 +691,7 @@ public class SincronitzacioController {
         return this.simula(centre, usuarisNoActiusBeforeSync);
     }
 
+
     private void desactivarUsuaris() {
         //Desactivar tots els usuaris (activem només els que hi ha dins l'xml)
         usuariService.desactivarUsuaris();
@@ -516,8 +706,7 @@ public class SincronitzacioController {
     }
 
     private List<String> simula(@NotNull CentreDto centre, List<UsuariDto> usuarisNoActiusBeforeSync) {
-        // Passam l'arxiu a dins una carpeta
-        String fileName = this.tmpPath + "/arxiu.xml";
+        String fileName = this.tmpPath + "/arxiu-" + centre.getIdentificador() + ".xml";
         List<String> resultat = new ArrayList<>();
 
         File f = new File(fileName);
@@ -567,7 +756,7 @@ public class SincronitzacioController {
                             GrupDto g = grupService.findByGestibIdentificador(codiGrup);
                             CursDto cursGrup = cursService.findByGestibIdentificador(codiCurs);
 
-                            if(cursGrup==null){
+                            if (cursGrup == null) {
                                 resultat.add("Avís! El grup " + codiGrup + " - " + nomGrup + " no té curs.");
                             } else if (g == null) {
                                 resultat.add("Nou grup: " + nomGrup + " del curs " + cursGrup.getGestibNom());
@@ -668,6 +857,7 @@ public class SincronitzacioController {
                         String ap2 = eAlumne.getAttribute("ap2");
                         String exp = eAlumne.getAttribute("expedient");
                         String grup = eAlumne.getAttribute("grup");
+                        String alumneusuari = eAlumne.getAttribute("usuari");
 
                         //Podria passar que algú creàs a mà l'usuari a GSuite (correctament) però no haguesin passat l'xml, per tant...
                         UsuariDto u = usuariService.findByGSuitePersonalID(codi);
@@ -710,14 +900,14 @@ public class SincronitzacioController {
                             if (u != null) {
                                 //Si estava inactiu i ara passa a actiu
                                 if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
-                                    resultat.add("L'alumne "+ u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") passa d'inactiu a actiu");
+                                    resultat.add("L'alumne " + u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") passa d'inactiu a actiu");
                                 }
 
                                 //Si ha canviat de grup l'actualitzem
                                 Long idusuari = u.getIdusuari();
                                 UsuariDto alumneOld = alumnesOld.stream().filter(a -> a.getIdusuari().equals(idusuari)).findFirst().orElse(null);
                                 if (!this.usuariTeGrup(alumneOld, grup) && u.getGsuiteEmail() != null) {
-                                    String infoAlumne = "L'alumne "+ u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") ha canviat de grup.";
+                                    String infoAlumne = "L'alumne " + u.getGestibCognom1() + " " + u.getGestibCognom2() + ", " + u.getGestibNom() + " (" + u.getGsuiteEmail() + ") ha canviat de grup.";
 
                                     GrupDto grupOld = null;
                                     if (alumneOld != null) {
@@ -741,7 +931,24 @@ public class SincronitzacioController {
                                     resultat.add(infoAlumne);
                                 }
                             } else {
-                                resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. Es crearà un compte d'usuari a GSuite");
+                                UsuariDto usuariAlumne = new UsuariDto();
+                                usuariAlumne.setGestibCodi(codi);
+                                usuariAlumne.setGestibNom(nom);
+                                usuariAlumne.setGestibCognom1(ap1);
+                                usuariAlumne.setGestibCognom2(ap2);
+                                usuariAlumne.setGestibExpedient(exp);
+                                usuariAlumne.setGestibGrup(grup);
+                                usuariAlumne.setGestibAlumne(true);
+                                usuariAlumne.setGestibProfessor(false);
+                                usuariAlumne.setActiu(true);
+                                usuariAlumne.setGestibAlumneUsuari(alumneusuari);
+
+                                String username = this.generateUsername(usuariAlumne, this.formatEmailAlumnes);
+                                if(username ==null){
+                                    resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. NO es pot crear usuari a GSuite perquè no es pot generar el nom d'usuari");
+                                } else {
+                                    resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " no existeix. Es crearà un compte d'usuari a GSuite");
+                                }
                             }
                         }
 
@@ -763,22 +970,22 @@ public class SincronitzacioController {
                 for (UsuariDto alumne : allAlumnes) {
                     if (alumne.getActiu()) {
                         String grupAlumne = "Grup: ";
-                        if(alumne.getGestibGrup()!= null && !alumne.getGestibGrup().isEmpty()){
+                        if (alumne.getGestibGrup() != null && !alumne.getGestibGrup().isEmpty()) {
                             String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibCurs();
                             grupAlumne += cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup()).getGestibNom();
                         }
-                        if(alumne.getGestibGrup2()!= null && !alumne.getGestibGrup2().isEmpty()){
+                        if (alumne.getGestibGrup2() != null && !alumne.getGestibGrup2().isEmpty()) {
                             String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibCurs();
                             grupAlumne += " - " + cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup2()).getGestibNom();
                         }
-                        if(alumne.getGestibGrup3()!= null && !alumne.getGestibGrup3().isEmpty()){
+                        if (alumne.getGestibGrup3() != null && !alumne.getGestibGrup3().isEmpty()) {
                             String idGestibCurs = grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibCurs();
                             grupAlumne += " - " + cursService.findByGestibIdentificador(idGestibCurs).getGestibNom();
                             grupAlumne += " " + grupService.findByGestibIdentificador(alumne.getGestibGrup3()).getGestibNom();
                         }
-                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "("+grupAlumne+") s'ha marcat com INACTIU.");
+                        resultat.add("L'alumne " + alumne.getGestibNom() + " " + alumne.getGestibCognom1() + " " + alumne.getGestibCognom2() + "(" + grupAlumne + ") s'ha marcat com INACTIU.");
                     }
                 }
             }
@@ -850,7 +1057,7 @@ public class SincronitzacioController {
 
                     SubmateriaDto s = submateriaService.findByGestibIdentificador(codi);
                     CursDto cursSubmateria = cursService.findByGestibIdentificador(curs);
-                    if(cursSubmateria == null){
+                    if (cursSubmateria == null) {
                         resultat.add("Avís! La submateria " + codi + " - " + nom + " no té curs.");
                     } else if (s == null) {
                         resultat.add("Nova submatèria: " + nom + " (" + nomCurt + ") del curs " + cursSubmateria.getGestibNom());
@@ -922,7 +1129,7 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisUpdate = new ArrayList<>();
 
         // Passam l'arxiu a dins una carpeta
-        String fileName = this.tmpPath + "/arxiu.xml";
+        String fileName = this.tmpPath + "/arxiu-" + centre.getIdentificador() + ".xml";
 
         File f = new File(fileName);
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -1059,12 +1266,12 @@ public class SincronitzacioController {
                                 log.info("Usuari " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
                                 usuarisUpdate.add(u);
                             }
-                            usuariService.saveGestib(u, codi, nom, ap1, ap2, usuari, null, null, departament, true, false);
+                            usuariService.saveGestib(u, codi, nom, ap1, ap2, usuari, null, null, departament, true, false,null);
                         }
 
                         u = usuariService.findByGestibCodi(codi);
                         if (u == null) {
-                            usuariService.saveGestib(codi, nom, ap1, ap2, usuari, null, null, departament, true, false);
+                            usuariService.saveGestib(codi, nom, ap1, ap2, usuari, null, null, departament, true, false,null);
                         } else {
                             //Si estava inactiu i ara passa a actiu
                             if (usuarisNoActiusBeforeSync.contains(u) && u.getGsuiteEmail() != null) {
@@ -1106,6 +1313,7 @@ public class SincronitzacioController {
                         String ap2 = eAlumne.getAttribute("ap2");
                         String exp = eAlumne.getAttribute("expedient");
                         String grup = eAlumne.getAttribute("grup");
+                        String alumneUsuari = eAlumne.getAttribute("usuari");
 
                         //Podria passar que algú creàs a mà l'usuari a GSuite (correctament) però no haguesin passat l'xml, per tant...
                         UsuariDto u = usuariService.findByGSuitePersonalID(codi);
@@ -1125,14 +1333,14 @@ public class SincronitzacioController {
                                 usuarisUpdate.add(u);
                             }
 
-                            UsuariDto alumne = usuariService.saveGestib(u, codi, nom, ap1, ap2, null, exp, grup, null, false, true);
+                            UsuariDto alumne = usuariService.saveGestib(u, codi, nom, ap1, ap2, null, exp, grup, null, false, true,alumneUsuari);
 
                             usuariService.save(alumne);
                         }
 
                         u = usuariService.findByGestibCodi(codi);
                         if (u == null) {
-                            UsuariDto alumne = usuariService.saveGestib(codi, nom, ap1, ap2, null, exp, grup, null, false, true);
+                            UsuariDto alumne = usuariService.saveGestib(codi, nom, ap1, ap2, null, exp, grup, null, false, true,alumneUsuari);
                             //usuariService.save(alumne);
                         } else {
                             //Si estava inactiu i ara passa a actiu
@@ -1159,6 +1367,7 @@ public class SincronitzacioController {
                                 u.setGestibGrup3(grup);
                             }
                             u.setGestibExpedient(exp);
+                            u.setGestibAlumneUsuari(alumneUsuari);
                             u.setActiu(true);
                             usuariService.save(u);
                         }
@@ -1315,16 +1524,16 @@ public class SincronitzacioController {
         //Pot passar que el personalIdKey no coincideixi, per què?
         //Idò pot passar que hagin ESBORRAT l'usuari a GSuite, aleshores el programa en fa un de nou
         //I clar, a la BBDD no coincideix, solució? Si no coincideix el personal ID key, passa a eliminat amb una observació.
-        for(UsuariDto usuariGestib: usuarisGestib){
+        for (UsuariDto usuariGestib : usuarisGestib) {
             boolean trobat = true;
 
             //Si el mail i personal id existeixen vol dir que hi ha d'haver algú a GSuite amb aquestes característiques,
             //Si no és així, eliminem l'usuari
-            if(usuariGestib.getGsuiteEmail()!=null &&
+            if (usuariGestib.getGsuiteEmail() != null &&
                     !usuariGestib.getGsuiteEmail().isEmpty() &&
-                    usuariGestib.getGsuitePersonalID()!=null &&
+                    usuariGestib.getGsuitePersonalID() != null &&
                     !usuariGestib.getGsuitePersonalID().isEmpty()
-            ){
+            ) {
                 trobat = false;
                 for (User gsuiteUser : gsuiteUsers) {
 
@@ -1350,16 +1559,16 @@ public class SincronitzacioController {
                     } catch (Exception e) {
                     }
 
-                    if(usuariGestib.getGsuiteEmail().equals(email) && usuariGestib.getGsuitePersonalID().equals(personalIdKey)){
-                        trobat=true;
+                    if (usuariGestib.getGsuiteEmail().equals(email) && usuariGestib.getGsuitePersonalID().equals(personalIdKey)) {
+                        trobat = true;
                         break;
                     }
                 }
             }
 
-            if(!trobat){
+            if (!trobat) {
                 UsuariDto u = usuariService.findById(usuariGestib.getIdusuari());
-                log.info("Eliminant usuari "+usuariGestib.getIdusuari());
+                log.info("Eliminant usuari " + usuariGestib.getIdusuari());
 
                 String descripcio = "L'usuari de l'aplicació no coincideix amb el de GSuite. Es procedeix a donar esborrar-lo. Correu antic: " + u.getGsuiteEmail() + ". Personal ID antic: " + u.getGsuitePersonalID();
 
@@ -1411,9 +1620,9 @@ public class SincronitzacioController {
 
             //Comprovació de seguretat. Podria passar que s'hagués actualitzat a GSuite sense número i
             // després posar-li a posteriori quan ja s'ha posat com a eliminat. Solució: comprovar de nou si és a GSuite, i si hi és, no està eliminat
-            if(u!=null && u.getGsuiteEliminat() != null && !u.getGsuiteEliminat()){
+            if (u != null && u.getGsuiteEliminat() != null && !u.getGsuiteEliminat()) {
                 User uGSuite = gSuiteService.getUserById(email);
-                if(uGSuite!=null){
+                if (uGSuite != null) {
                     //Marcam com a NO eliminat, així a la pròxima comprovació l'actualitzarem.
                     u.setGsuiteEliminat(false);
                 }
@@ -1446,8 +1655,12 @@ public class SincronitzacioController {
                 }
 
                 usuariService.save(u);
+            } else if(u != null){ //Si l'usuari no és null i entra vol dir que eliminat = true
+                u.setGsuitePersonalID(null);
+                u.setGsuiteEmail(null);
+                usuariService.save(u);
             } else {
-                log.info("L'usuari no existeix. Creant usuari " + email + " amb clau " + personalIdKey);
+                log.info("L'usuari no existeix. Creant usuari {} amb clau {}", email, personalIdKey);
                 boolean actiu = personalIdKey == null || personalIdKey.isEmpty();
                 usuariService.saveGSuite(email, isAdmin, personalIdKey, isSuspes, unitatOrganitzativa, givenName, familyName, fullName, actiu);
             }
@@ -1470,8 +1683,8 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisSenseCorreu = usuariService.findUsuarisSenseCorreu();
         for (UsuariDto usuari : usuarisSenseCorreu) {
             //Comprovam si està actiu pels usuaris eliminats, no hem de crear el de tothom
-            if (centre.getSincronitzaProfessors()!=null && centre.getSincronitzaProfessors() &&
-                    usuari.getGestibProfessor() != null &&  usuari.getGestibProfessor() &&
+            if (centre.getSincronitzaProfessors() != null && centre.getSincronitzaProfessors() &&
+                    usuari.getGestibProfessor() != null && usuari.getGestibProfessor() &&
                     usuari.getActiu() != null && usuari.getActiu() &&
                     usuari.getGsuiteEmail() == null) {
                 String username = this.generateUsername(usuari, this.formatEmailProfessors);
@@ -1509,66 +1722,74 @@ public class SincronitzacioController {
                     String missatge = "Error creant el correu del professor " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
                     log.error(missatge);
                 }
-            } else if (centre.getSincronitzaAlumnes()!=null && centre.getSincronitzaAlumnes() &&
-                    usuari.getGestibAlumne() !=null && usuari.getGestibAlumne() &&
-                    usuari.getActiu() !=null && usuari.getActiu() &&
+            } else if (centre.getSincronitzaAlumnes() != null && centre.getSincronitzaAlumnes() &&
+                    usuari.getGestibAlumne() != null && usuari.getGestibAlumne() &&
+                    usuari.getActiu() != null && usuari.getActiu() &&
                     usuari.getGsuiteEmail() == null) {
                 //Username
                 String username = this.generateUsername(usuari, this.formatEmailAlumnes);
 
-                //Unitat organitzativa de l'alumne
-                GrupDto grup = grupService.findByGestibIdentificador(usuari.getGestibGrup());
-                if (grup != null) {
-                    CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
-                    String rutaUnitat = "";
-                    if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
-                        rutaUnitat = this.defaultUOAlumnes;
-                    } else {
-                        rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
-                    }
-
-                    String nom = usuari.getGestibNom();
-                    String cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
-
-                    if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2")) {
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
-                    } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
-                        if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
-                            cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                //Si no s'ha pogut crear un nom d'usuari es retorna null
+                //Per exemple: no té nom de Moodle assignat i els alumnes estan configurats amb nom de Moodle.
+                if(username != null){
+                    //Unitat organitzativa de l'alumne
+                    GrupDto grup = grupService.findByGestibIdentificador(usuari.getGestibGrup());
+                    if (grup != null) {
+                        CursDto curs = cursService.findByGestibIdentificador(grup.getGestibCurs());
+                        String rutaUnitat = "";
+                        if (grup.getGsuiteUnitatOrganitzativa() == null || grup.getGsuiteUnitatOrganitzativa().isEmpty()) {
+                            rutaUnitat = this.defaultUOAlumnes;
                         } else {
-                            cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
+                            rutaUnitat = grup.getGsuiteUnitatOrganitzativa();
                         }
-                        nom = UtilService.capitalize(nom);
-                        cognoms = UtilService.capitalize(cognoms);
+
+                        String nom = usuari.getGestibNom();
+                        String cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+
+                        if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2")) {
+                            nom = UtilService.capitalize(nom);
+                            cognoms = UtilService.capitalize(cognoms);
+                        } else if (formatNomGSuiteAlumnes.equals("nomcognom1cognom2cursgrup")) {
+                            if (curs == null || curs.getGestibNom() == null || curs.getGestibNom().isEmpty() || grup.getGestibNom() == null || grup.getGestibNom().isEmpty()) {
+                                cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                            } else {
+                                cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + curs.getGestibNom() + grup.getGestibNom();
+                            }
+                            nom = UtilService.capitalize(nom);
+                            cognoms = UtilService.capitalize(cognoms);
+                        }
+
+                        log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + grup.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
+
+                        User usuariGSuite = gSuiteService.createUser(username, nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
+
+                        if (usuariGSuite != null) {
+                            log.info("Usuari" + usuariGSuite.getPrimaryEmail() + " creat correctament a GSuite com alumne");
+
+                            //Actualitzar usuari Gestib
+                            usuari.setActiu(true);
+                            usuari.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
+                            usuari.setGsuiteAdministrador(usuariGSuite.getIsAdmin());
+                            usuari.setGsuitePersonalID(usuari.getGestibCodi());
+                            usuari.setGsuiteSuspes(usuariGSuite.getSuspended());
+                            usuari.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
+                            usuari.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
+                            usuari.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
+                            usuari.setGsuiteFullName(usuariGSuite.getName().getFullName());
+
+                            usuariService.save(usuari);
+
+                            alumnesNous.add(usuari);
+                        } else {
+                            String missatge = "Error creant el correu de l'alumne " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
+                            log.error(missatge);
+                        }
                     }
 
-                    log.info(username + "---" + usuari.getGestibNom() + "---" + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2() + " " + grup.getGsuiteUnitatOrganitzativa() + "---" + usuari.getGestibCodi() + "---" + rutaUnitat);
-
-                    User usuariGSuite = gSuiteService.createUser(username, nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
-
-                    if (usuariGSuite != null) {
-                        log.info("Usuari" + usuariGSuite.getPrimaryEmail() + " creat correctament a GSuite com alumne");
-
-                        //Actualitzar usuari Gestib
-                        usuari.setActiu(true);
-                        usuari.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
-                        usuari.setGsuiteAdministrador(usuariGSuite.getIsAdmin());
-                        usuari.setGsuitePersonalID(usuari.getGestibCodi());
-                        usuari.setGsuiteSuspes(usuariGSuite.getSuspended());
-                        usuari.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
-                        usuari.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
-                        usuari.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
-                        usuari.setGsuiteFullName(usuariGSuite.getName().getFullName());
-
-                        usuariService.save(usuari);
-
-                        alumnesNous.add(usuari);
-                    } else {
-                        String missatge = "Error creant el correu de l'alumne " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
-                        log.error(missatge);
-                    }
+                } else {
+                    log.error("Error a l'usuari: Nom d'usuari buit per " + usuari.getGestibNom() + " " + usuari.getGestibCognom1()+" "+usuari.getGestibCognom2());
                 }
+
             } else {
                 log.error("Error a l'usuari " + usuari.getGestibNom() + usuari.getGestibCognom1());
             }
@@ -1813,14 +2034,14 @@ public class SincronitzacioController {
             for (Member member : members) {
                 UsuariDto usuari = usuariService.findByEmail(member.getEmail());
                 if (usuari != null) {
-                    UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug->ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
+                    UsuariGrupCorreuDto usuariBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ug -> ug.getUsuari().getIdusuari().equals(usuari.getIdusuari())).findFirst().orElse(null);
 
-                    grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat!=null);
+                    grupCorreuService.insertUsuari(grupCorreu, usuari, usuariBloquejat != null);
                 }
             }
 
             //Afegim els bloquejats
-            for(UsuariGrupCorreuDto usuaribloquejat: usuarisBloquejats){
+            for (UsuariGrupCorreuDto usuaribloquejat : usuarisBloquejats) {
                 grupCorreuService.insertUsuari(grupCorreu, usuaribloquejat.getUsuari(), true);
             }
         }
@@ -1840,11 +2061,11 @@ public class SincronitzacioController {
                 String nom = usuari.getGsuiteGivenName();
                 String cognoms = usuari.getGsuiteFamilyName();
 
-                if(nom==null || nom.isEmpty()) {
+                if (nom == null || nom.isEmpty()) {
                     nom = usuari.getGestibNom();
                 }
 
-                if(cognoms==null || cognoms.isEmpty()) {
+                if (cognoms == null || cognoms.isEmpty()) {
                     cognoms = usuari.getGestibCognom1() + " " + usuari.getGestibCognom2();
                 }
 
@@ -2017,7 +2238,7 @@ public class SincronitzacioController {
                             boolean isGrupTutorsFCT = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS_FCT);
                             boolean isGrupCoordinacions = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.COORDINACIO);
                             boolean isGrupAlumnat = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.ALUMNAT);
-                            boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc->ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size()>0;
+                            boolean isBloquejat = grupCorreu.getUsuarisGrupCorreu().stream().filter(ugc -> ugc.getUsuari().getIdusuari().equals(usuari.getIdusuari()) && ugc.isBloquejat()).collect(Collectors.toList()).size() > 0;
                             if (isGrupAlumnat || isGrupClaustre || isGrupProfessors || isGrupTutors || isGrupDepartament || isGrupTutorsFCT || isGrupCoordinacions) {
                                 if (usuari.getGsuiteEmail() != null && grupOld.getEmail() != null && !isBloquejat) {
                                     gSuiteService.deleteMember(usuari.getGsuiteEmail(), grupOld.getEmail());
@@ -2110,7 +2331,7 @@ public class SincronitzacioController {
                                     cognoms = UtilService.capitalize(cognoms);
                                 }
 
-                                if (!usuari.getGsuiteGivenName().equals(nom) || !usuari.getGsuiteFamilyName().equals(cognoms)) {
+                                if (usuari.getGsuiteGivenName() == null || usuari.getGsuiteFamilyName() == null || !usuari.getGsuiteGivenName().equals(nom) || !usuari.getGsuiteFamilyName().equals(cognoms)) {
                                     User usuariGSuite = gSuiteService.updateUser(usuari.getGsuiteEmail(), nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
 
                                     if (usuariGSuite != null) {
@@ -2118,7 +2339,7 @@ public class SincronitzacioController {
                                     } else {
                                         log.error("Error modificant usuari " + usuari.getGsuiteEmail(), "Error modificant usuari " + usuari.getGsuiteEmail(), this.adminUser);
                                     }
-                                } else if(!usuari.getBloquejaGsuiteUnitatOrganitzativa() && !usuari.getGsuiteUnitatOrganitzativa().equals(rutaUnitat)){
+                                } else if (!usuari.getBloquejaGsuiteUnitatOrganitzativa() && !usuari.getGsuiteUnitatOrganitzativa().equals(rutaUnitat)) {
                                     User usuariGSuite = gSuiteService.updateUser(usuari.getGsuiteEmail(), nom, cognoms, usuari.getGestibCodi(), rutaUnitat);
 
                                     if (usuariGSuite != null) {
@@ -2145,7 +2366,7 @@ public class SincronitzacioController {
 
                     if (!trobat) {
                         GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(grupOld.getEmail());
-                        if(grupCorreu!=null && grupCorreu.getGrupCorreuTipus()!=null) {
+                        if (grupCorreu != null && grupCorreu.getGrupCorreuTipus() != null) {
                             boolean isGrupClaustre = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.CLAUSTRE);
                             boolean isGrupProfessors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.PROFESSORAT);
                             boolean isGrupTutors = grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.TUTORS);
@@ -2214,10 +2435,10 @@ public class SincronitzacioController {
         List<UsuariDto> usuarisNoActiusAll = usuariService.findUsuarisNoActius();
         log.info("Canviem l'usuari a la UO d'inactius");
         for (UsuariDto usuari : usuarisNoActiusAll) {
-            if(usuari.getGestibProfessor() != null && usuari.getGestibProfessor()){
+            if (usuari.getGestibProfessor() != null && usuari.getGestibProfessor()) {
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOProfessors);
                 gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOProfessors);
-            } else if(usuari.getGestibAlumne()!=null && usuari.getGestibAlumne()){
+            } else if (usuari.getGestibAlumne() != null && usuari.getGestibAlumne()) {
                 usuari.setGsuiteUnitatOrganitzativa(this.inactiuUOAlumnes);
                 gSuiteService.updateUser(usuari.getGsuiteEmail(), usuari.getGsuiteGivenName(), usuari.getGsuiteFamilyName(), usuari.getGestibCodi(), this.inactiuUOAlumnes);
             } else {
@@ -2230,6 +2451,7 @@ public class SincronitzacioController {
 
     private String generateUsername(UsuariDto usuari, String format) throws InterruptedException {
 
+        String[] ignorat = {"de", "del", "la", "las", "los", "el", "els", "i", "dels", "a", "al", "als", "l'", "na", "no", "es", "en", "es"};
         String nom = removeAccents(usuari.getGestibNom());
         String cognom1 = removeAccents(usuari.getGestibCognom1());
         String cognom2 = removeAccents(usuari.getGestibCognom2());
@@ -2246,9 +2468,23 @@ public class SincronitzacioController {
             case "ncognom1" -> username = nom.charAt(0) + cognom1.trim();
             case "ncognom1exp" -> username = nom.charAt(0) + cognom1.trim() + usuari.getGestibExpedient();
             case "n.cognom1cognom2" -> username = nom.charAt(0) + "." + cognom1.trim() + cognom2.trim();
+            case "alumneusuari" -> username = usuari.getGestibAlumneUsuari();
+            case "nmcognom1" -> {
+                String[] nomCompost = nom.split(" ");
+                StringBuilder nomCompostFinal = new StringBuilder();
+                for (String nomCompostPart : nomCompost) {
+                    if(!Arrays.asList(ignorat).contains(nomCompostPart.toLowerCase())) {
+                        nomCompostFinal.append(nomCompostPart.charAt(0));
+                    }
+                }
+                username = nomCompostFinal + cognom1.trim();
+            }
         }
 
         username = username.trim().toLowerCase();
+
+        //Comprovació de seguretat
+        if(username.isEmpty()) return null;
 
         User u = gSuiteService.getUserById(username + domini);
 
