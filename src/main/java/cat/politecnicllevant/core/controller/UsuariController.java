@@ -170,6 +170,19 @@ public class UsuariController {
         return new ResponseEntity<>(rols, HttpStatus.OK);
     }
 
+    @PostMapping("/usuaris/desaRols")
+    public ResponseEntity<Notificacio> desaRols(@RequestBody UsuariDto usuariDto) {
+//        UsuariDto usuariOriginal = usuariService.findById(usuariDto.getIdusuari());
+//        usuariOriginal.setRols(usuariDto.getRols());
+
+        usuariService.save(usuariDto);
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Rols d'usuari desats correctament");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
     @GetMapping("/usuaris/profile/{id}")
     public ResponseEntity<UsuariDto> getProfile(@PathVariable("id") String idUsuari, HttpServletRequest request) throws Exception {
         Claims claims = tokenManager.getClaims(request);
