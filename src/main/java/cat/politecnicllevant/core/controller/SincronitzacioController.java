@@ -2201,6 +2201,10 @@ public class SincronitzacioController {
                         }
                     }
                 }
+                //Comprovem també si té el rol de Tutor FCT
+                if(usuari.getRols() != null && usuari.getRols().contains(RolDto.TUTOR_FCT) && usuari.getActiu()){
+                    esProfeFCT = true;
+                }
                 if (esProfeFCT) {
                     List<GrupCorreuDto> grupsFCT = grupCorreuService.findAllByTipus(GrupCorreuTipusDto.TUTORS_FCT);
                     for (GrupCorreuDto grupFCT : grupsFCT) {

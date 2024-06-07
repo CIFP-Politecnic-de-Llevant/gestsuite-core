@@ -487,6 +487,11 @@ public class GrupCorreuController {
                         }
                     }
                 }
+
+                //Comprovem també si té el rol de Tutor FCT
+                if(profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
+                    usuarisGrup.add(profe);
+                }
             }
         } else if (grupCorreu.getGrupCorreuTipus().equals(GrupCorreuTipusDto.DEPARTAMENT)) {
             List<UsuariDto> professors = usuariService.findProfessors();
