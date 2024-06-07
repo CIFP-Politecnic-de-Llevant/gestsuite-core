@@ -280,6 +280,11 @@ public class UsuariController {
                     }
                 }
             }
+
+            //Comprovem també si té el rol de Tutor FCT
+            if(profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
+                tutorsFCT.add(profe);
+            }
         }
 
         return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
@@ -303,11 +308,22 @@ public class UsuariController {
             List<UsuariDto> professors = usuariService.findProfessors();
             for (UsuariDto profe : professors) {
                 System.out.println("Usuari:" + profe.getGsuiteFullName() + "Email:" + profe.getGsuiteEmail());
+
+                boolean imparteixSubmateriaGrup = false;
+
                 List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
                 for (SessioDto sessio : sessions) {
                     String codiGestibSubmateria = sessio.getGestibSubmateria();
                     if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
                         SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
+
+                        if(submateria != null && submateria.getGestibCurs() != null
+                                && profe.getActiu()
+                                && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
+                        ) {
+                            imparteixSubmateriaGrup = true;
+                            break;
+                        }
 
                         if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
                                 (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
@@ -334,6 +350,12 @@ public class UsuariController {
                         }
                     }
                 }
+
+                //Si imparteix alguna submatèria al grup comprovem també si té el rol de Tutor FCT
+                if(imparteixSubmateriaGrup && profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
+                    tutorsFCT.add(profe);
+                }
+
             }
         }
 
