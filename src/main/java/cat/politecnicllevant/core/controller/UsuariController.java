@@ -322,7 +322,6 @@ public class UsuariController {
                                 && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
                         ) {
                             imparteixSubmateriaGrup = true;
-                            break;
                         }
 
                         if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
