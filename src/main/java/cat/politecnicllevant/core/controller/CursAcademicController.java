@@ -26,10 +26,6 @@ public class CursAcademicController {
     @Autowired
     private CursAcademicService cursAcademicService;
 
-    @Autowired
-    private Gson gson;
-
-
     @GetMapping("/cursAcademic/getById/{id}")
     public ResponseEntity<CursAcademicDto> getCursAcademicById(@PathVariable("id") Long identificador) {
         CursAcademicDto cursAcademic = cursAcademicService.findById(identificador);
