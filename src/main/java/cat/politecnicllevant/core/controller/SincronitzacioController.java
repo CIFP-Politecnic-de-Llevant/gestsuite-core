@@ -302,7 +302,7 @@ public class SincronitzacioController {
     }
 
     @PostMapping("/sync/mergegsuitegestib")
-    public ResponseEntity<Notificacio> getGSuiteAngGestibUsers() throws InterruptedException {
+    public ResponseEntity<List<String>> getGSuiteAngGestibUsers() throws InterruptedException {
         List<UsuariDto> usuaris = usuariService.findAll();
         List<User> usuarisGSuite = gSuiteService.getUsers();
 
@@ -496,7 +496,7 @@ public class SincronitzacioController {
         notificacio.setNotifyMessage("Usuaris de GSuite importats correctament");
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
 
-        return new ResponseEntity<>(notificacio, HttpStatus.OK);
+        return new ResponseEntity<>(resultat, HttpStatus.OK);
     }
 
     @PostMapping("/sync/reassignarGrups")
