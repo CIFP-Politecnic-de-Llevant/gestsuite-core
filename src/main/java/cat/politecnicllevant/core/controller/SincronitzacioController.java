@@ -484,6 +484,7 @@ public class SincronitzacioController {
             resultat.add("Alumnes mesclats: " + mesclats+"/"+nodesAlumne.getLength());
 
             //Result
+            System.out.println("Resultat Mescla:");
             for(String r: resultat){
                 System.out.println(r);
             }
