@@ -23,6 +23,7 @@ public @Data class UsuariDto implements Cloneable {
     private String gsuiteFamilyName;
     private String gsuiteFullName;
     private String gestibCodi;
+    private String gestibCodiOriginal;
     private String gestibNom;
     private String gestibCognom1;
     private String gestibCognom2;

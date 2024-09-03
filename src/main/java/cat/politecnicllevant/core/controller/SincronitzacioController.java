@@ -390,9 +390,13 @@ public class SincronitzacioController {
                         //Try to associate to a user by Name and Surname
                         List<UsuariDto> usuarisCandidats = usuariService.findByNomCognom1Cognom2(nom, ap1, ap2);
                         if (usuarisCandidats.size() == 1) {
+
+                            String codiOriginal = usuarisCandidats.get(0).getGestibCodi();
+
                             u = usuarisCandidats.get(0);
                             u.setGestibCodi(codi);
                             u.setGsuitePersonalID(codi);
+                            u.setGestibCodiOriginal(codiOriginal);
                             usuariService.save(u);
 
                             User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
@@ -445,9 +449,13 @@ public class SincronitzacioController {
                         //Try to associate to a user by Name and Surname
                         List<UsuariDto> usuarisCandidats = usuariService.findByNomCognom1Cognom2(nom, ap1, ap2);
                         if (usuarisCandidats.size() == 1) {
+
+                            String codiOriginal = usuarisCandidats.get(0).getGestibCodi();
+
                             u = usuarisCandidats.get(0);
                             u.setGestibCodi(codi);
                             u.setGsuitePersonalID(codi);
+                            u.setGestibCodiOriginal(codiOriginal);
                             usuariService.save(u);
 
                             User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());

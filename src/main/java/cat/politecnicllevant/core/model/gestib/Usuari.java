@@ -59,6 +59,9 @@ public @Data class Usuari {
     @Column(name = "gestib_codi", nullable = true, length = 255)
     private String gestibCodi;
 
+    @Column(name = "gestib_codi_original", nullable = true, length = 255)
+    private String gestibCodiOriginal;
+
     @Column(name = "gestib_nom", nullable = true, length = 255)
     private String gestibNom;
 
