@@ -32,6 +32,12 @@ public class CursAcademicController {
         return new ResponseEntity<>(cursAcademic, HttpStatus.OK);
     }
 
+    @GetMapping("/cursAcademic/findAll")
+    public ResponseEntity<List<CursAcademicDto>> findAllCursosAcademics() {
+        List<CursAcademicDto> cursosAcademics = cursAcademicService.findAll();
+        return new ResponseEntity<>(cursosAcademics, HttpStatus.OK);
+    }
+
     @GetMapping("/cursAcademic/actual")
     public ResponseEntity<CursAcademicDto> getActualCursAcademic() {
         CursAcademicDto cursAcademic = cursAcademicService.findActual();
