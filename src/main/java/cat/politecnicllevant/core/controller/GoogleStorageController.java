@@ -34,6 +34,7 @@ public class GoogleStorageController {
 
     @PostMapping(value = "/googlestorage/generate-signed-url")
     public ResponseEntity<String> generateSignedURL(@RequestBody String json, @RequestHeader(value = "User-Agent") String ua) throws IOException {
+        System.out.println("GOOGLE STORAGE SIGNED URL: " + json);
         JsonObject data = gson.fromJson(json, JsonObject.class);
 
         boolean download = true;
@@ -43,14 +44,27 @@ public class GoogleStorageController {
 
         JsonObject jsonFitxerBucket = data.getAsJsonObject("fitxerBucket");
 
-        FitxerBucketDto fitxerBucket = new FitxerBucketDto();
-        fitxerBucket.setIdfitxer(jsonFitxerBucket.get("idfitxer").getAsLong());
-        fitxerBucket.setNom(jsonFitxerBucket.get("nom").getAsString());
-        fitxerBucket.setPath(jsonFitxerBucket.get("path").getAsString());
-        fitxerBucket.setBucket(jsonFitxerBucket.get("bucket").getAsString());
+        if(jsonFitxerBucket!=null && jsonFitxerBucket.get("idfitxer") != null && jsonFitxerBucket.get("nom") != null && jsonFitxerBucket.get("path") != null && jsonFitxerBucket.get("bucket") != null) {
+            FitxerBucketDto fitxerBucket = new FitxerBucketDto();
+            fitxerBucket.setIdfitxer(jsonFitxerBucket.get("idfitxer").getAsLong());
+            fitxerBucket.setNom(jsonFitxerBucket.get("nom").getAsString());
+            fitxerBucket.setPath(jsonFitxerBucket.get("path").getAsString());
+            fitxerBucket.setBucket(jsonFitxerBucket.get("bucket").getAsString());
 
-        String url = googleStorageService.generateV4GetObjectSignedUrl(fitxerBucket, download, ua);
-        return new ResponseEntity<>(url, HttpStatus.OK);
+            String url = googleStorageService.generateV4GetObjectSignedUrl(fitxerBucket, download, ua);
+            return new ResponseEntity<>(url, HttpStatus.OK);
+        } else if(data.get("idfitxer") != null && data.get("nom") != null && data.get("path") != null && data.get("bucket") != null) {
+            FitxerBucketDto fitxerBucket = new FitxerBucketDto();
+            fitxerBucket.setIdfitxer(data.get("idfitxer").getAsLong());
+            fitxerBucket.setNom(data.get("nom").getAsString());
+            fitxerBucket.setPath(data.get("path").getAsString());
+            fitxerBucket.setBucket(data.get("bucket").getAsString());
+
+            String url = googleStorageService.generateV4GetObjectSignedUrl(fitxerBucket, download, ua);
+            return new ResponseEntity<>(url, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Error", HttpStatus.BAD_REQUEST);
+        }
     }
 
 
