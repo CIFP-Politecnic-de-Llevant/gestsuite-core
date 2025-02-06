@@ -631,14 +631,14 @@ public class SincronitzacioController {
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
-    @PostMapping("/sync/cercaIdGesibDuplicats")
+    @PostMapping("/sync/cercaIdGestibDuplicats")
     public ResponseEntity<List<String>> cercaIdGestibDuplicats() throws InterruptedException {
         List<String> duplicats = new ArrayList<>();
 
         List<UsuariDto> usuaris = usuariService.findAll();
         for(UsuariDto u1: usuaris){
             for(UsuariDto u2: usuaris){
-                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGestibCodi()!=null && u2.getGestibCodi()!=null && u1.getGestibCodi().equals(u2.getGestibCodi())){
+                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGestibCodi()!=null && u2.getGestibCodi()!=null && !u1.getGestibCodi().isEmpty() && !u2.getGestibCodi().isEmpty() && u1.getGestibCodi().equals(u2.getGestibCodi())){
                     duplicats.add("BBDD - L'usuari "+u1.getGsuiteEmail()+" té el mateix codi Gestib que l'usuari "+u2.getGsuiteEmail());
                 }
             }
@@ -646,7 +646,7 @@ public class SincronitzacioController {
 
         for(UsuariDto u1: usuaris){
             for(UsuariDto u2: usuaris){
-                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGsuitePersonalID()!=null && u2.getGsuitePersonalID()!=null && u1.getGsuitePersonalID().equals(u2.getGsuitePersonalID())){
+                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGsuitePersonalID()!=null && u2.getGsuitePersonalID()!=null && !u1.getGsuitePersonalID().isEmpty() && !u2.getGsuitePersonalID().isEmpty() && u1.getGsuitePersonalID().equals(u2.getGsuitePersonalID())){
                     duplicats.add("BBDD - L'usuari "+u1.getGsuiteEmail()+" té el mateix codi Gsuite Personal ID que l'usuari "+u2.getGsuiteEmail());
                 }
             }
