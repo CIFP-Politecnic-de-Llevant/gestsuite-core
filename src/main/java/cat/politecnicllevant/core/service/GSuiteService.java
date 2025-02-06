@@ -114,6 +114,62 @@ public class GSuiteService {
         return new ArrayList<>();
     }
 
+    public List<User> getUserByIdExternal(String id) throws InterruptedException {
+        return getUserByIdExternal(id, 0);
+    }
+
+    private List<User> getUserByIdExternal(String id, int retry) throws InterruptedException {
+        try {
+            String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_USER, DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY};
+            GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
+            HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+
+            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+            Directory service = new Directory.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).setApplicationName(this.nomProjecte).build();
+
+            List<User> result = new ArrayList<>();
+
+            String[] dominis = {this.dominiPrincipal, this.dominiAlumnat};
+
+            for (String domain : dominis) {
+                Users query = service.users().list().setQuery("externalId:" + id)
+                        .setDomain(domain)
+                        .execute();
+
+                List<User> users = query.getUsers();
+                String pageToken = query.getNextPageToken();
+
+                //Resultat
+                if(users!=null) {
+                    result.addAll(users);
+
+                    while (pageToken != null) {
+                        Users query2 = service.users().list().setQuery("externalId:" + id)
+                                .setDomain(domain)
+                                .setPageToken(pageToken)
+                                .execute();
+                        List<User> users2 = query2.getUsers();
+                        pageToken = query2.getNextPageToken();
+
+                        if (users2 != null) {
+                            result.addAll(users2);
+                        }
+                    }
+                }
+            }
+            return result;
+        } catch (GeneralSecurityException | IOException e) {
+            if (retry < 5) {
+                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+                return getUsers(retry + 1);
+            }
+            log.error("Error aconseguint els usuaris de GSuite");
+            log.error(e.getMessage());
+        }
+        return new ArrayList<>();
+    }
+
     public User getUserById(String id) throws InterruptedException {
         return getUserById(id, 0);
     }

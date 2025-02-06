@@ -134,9 +134,11 @@ public class GSuiteController {
                             personalIdKey = valueValue;
                         }
                     } catch (Exception e) {
+                        log.error("Error al obtenir el personalIdKey de "+usuariGestib.getGsuiteEmail());
                     }
 
-                    if (usuariGestib.getGestibCodi().equals(usuariGestib.getGsuitePersonalID()) && usuariGestib.getGestibCodi().equals(personalIdKey) && usuariGSuite.getPrimaryEmail().equals(usuariGestib.getGsuiteEmail())) {
+                    boolean correctPersonalIDKey = ((usuariGestib.getGestibAlumne() || usuariGestib.getGestibProfessor()) && !personalIdKey.isEmpty()) || (!usuariGestib.getGestibAlumne() && !usuariGestib.getGestibProfessor());
+                    if ( correctPersonalIDKey && usuariGestib.getGestibCodi().equals(usuariGestib.getGsuitePersonalID()) && usuariGestib.getGestibCodi().equals(personalIdKey) && usuariGSuite.getPrimaryEmail().equals(usuariGestib.getGsuiteEmail())) {
                         log.info("Actualitzant nom de "+usuariGestib.getGsuiteEmail());
 
                         String nom =  UtilService.capitalize(usuariGSuite.getName().getGivenName());

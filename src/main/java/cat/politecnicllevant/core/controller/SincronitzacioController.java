@@ -6,6 +6,7 @@ import cat.politecnicllevant.common.service.UtilService;
 import cat.politecnicllevant.core.dto.gestib.*;
 import cat.politecnicllevant.core.dto.google.GrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuTipusDto;
+import cat.politecnicllevant.core.model.gestib.Usuari;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.services.directory.model.Group;
@@ -323,6 +324,8 @@ public class SincronitzacioController {
                 UsuariDto usuariDto = usuariService.findByEmail(usuariGSuite.getPrimaryEmail());
                 if (usuariDto == null) {
                     usuariDto = new UsuariDto();
+                    usuariDto.setGestibAlumne(false);
+                    usuariDto.setGestibProfessor(false);
                 }
 
                 String personalID = "";
@@ -332,21 +335,26 @@ public class SincronitzacioController {
                     ArrayMap userKey = list.stream().filter(u -> u.get("type").equals("organization")).findFirst().orElse(null);
                     personalID = (String) userKey.get("value");
                 } catch (Exception e) {
+                    log.error("Error llegint el personalID de l'usuari " + usuariGSuite.getPrimaryEmail());
                 }
 
-                usuariDto.setActiu(true);
-                usuariDto.setBloquejaGsuiteUnitatOrganitzativa(false);
-                usuariDto.setGsuiteAdministrador(false);
-                usuariDto.setGsuiteEliminat(false);
-                usuariDto.setGsuiteFullName(usuariGSuite.getName().getFullName());
-                usuariDto.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
-                usuariDto.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
-                usuariDto.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
-                usuariDto.setGsuitePersonalID(personalID);
-                usuariDto.setGsuiteSuspes(false);
-                usuariDto.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
+                boolean correctPersonalIDKey = ((usuariDto.getGestibAlumne() || usuariDto.getGestibProfessor()) && !personalID.isEmpty()) || (!usuariDto.getGestibAlumne() && !usuariDto.getGestibProfessor());
 
-                usuariService.save(usuariDto);
+                if(correctPersonalIDKey) {
+                    usuariDto.setActiu(true);
+                    usuariDto.setBloquejaGsuiteUnitatOrganitzativa(false);
+                    usuariDto.setGsuiteAdministrador(false);
+                    usuariDto.setGsuiteEliminat(false);
+                    usuariDto.setGsuiteFullName(usuariGSuite.getName().getFullName());
+                    usuariDto.setGsuiteGivenName(usuariGSuite.getName().getGivenName());
+                    usuariDto.setGsuiteFamilyName(usuariGSuite.getName().getFamilyName());
+                    usuariDto.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
+                    usuariDto.setGsuitePersonalID(personalID);
+                    usuariDto.setGsuiteSuspes(false);
+                    usuariDto.setGsuiteUnitatOrganitzativa(usuariGSuite.getOrgUnitPath());
+
+                    usuariService.save(usuariDto);
+                }
             }
         }
 
@@ -621,6 +629,81 @@ public class SincronitzacioController {
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
 
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/sync/cercaIdGesibDuplicats")
+    public ResponseEntity<List<String>> cercaIdGestibDuplicats() throws InterruptedException {
+        List<String> duplicats = new ArrayList<>();
+
+        List<UsuariDto> usuaris = usuariService.findAll();
+        for(UsuariDto u1: usuaris){
+            for(UsuariDto u2: usuaris){
+                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGestibCodi()!=null && u2.getGestibCodi()!=null && u1.getGestibCodi().equals(u2.getGestibCodi())){
+                    duplicats.add("BBDD - L'usuari "+u1.getGsuiteEmail()+" té el mateix codi Gestib que l'usuari "+u2.getGsuiteEmail());
+                }
+            }
+        }
+
+        for(UsuariDto u1: usuaris){
+            for(UsuariDto u2: usuaris){
+                if(!u1.getIdusuari().equals(u2.getIdusuari()) && u1.getGsuitePersonalID()!=null && u2.getGsuitePersonalID()!=null && u1.getGsuitePersonalID().equals(u2.getGsuitePersonalID())){
+                    duplicats.add("BBDD - L'usuari "+u1.getGsuiteEmail()+" té el mateix codi Gsuite Personal ID que l'usuari "+u2.getGsuiteEmail());
+                }
+            }
+        }
+
+        try {
+            List<User> usuariDtos = gSuiteService.getUsers();
+            for (User u1 : usuariDtos) {
+                for (User u2 : usuariDtos) {
+                    String personalIdKeyU1 = "";
+                    try {
+                        List personalIDValueOrganization = (ArrayList) u1.getExternalIds();
+                        ArrayMap userKey = (ArrayMap) personalIDValueOrganization.get(0);
+
+                        String valueKey = userKey.getKey(0).toString();
+                        String valueValue = userKey.getValue(0).toString();
+
+                        String organizationKey = userKey.getKey(1).toString();
+                        String organizationValue = userKey.getValue(1).toString();
+
+
+                        //System.out.println(valueKey + "<<->>" + valueValue + "<<->>" + organizationKey + "<<->>" + organizationValue+ "<<->>");
+
+                        if (valueKey.equals("value") && organizationKey.equals("type") && organizationValue.equals("organization")) {
+                            personalIdKeyU1 = valueValue;
+                        }
+                    } catch (Exception e) {}
+
+                    String personalIdKeyU2 = "";
+                    try {
+                        List personalIDValueOrganization = (ArrayList) u2.getExternalIds();
+                        ArrayMap userKey = (ArrayMap) personalIDValueOrganization.get(0);
+
+                        String valueKey = userKey.getKey(0).toString();
+                        String valueValue = userKey.getValue(0).toString();
+
+                        String organizationKey = userKey.getKey(1).toString();
+                        String organizationValue = userKey.getValue(1).toString();
+
+
+                        //System.out.println(valueKey + "<<->>" + valueValue + "<<->>" + organizationKey + "<<->>" + organizationValue+ "<<->>");
+
+                        if (valueKey.equals("value") && organizationKey.equals("type") && organizationValue.equals("organization")) {
+                            personalIdKeyU2 = valueValue;
+                        }
+                    } catch (Exception e) {}
+
+                    if(!u1.getId().equals(u2.getId()) && personalIdKeyU1!=null && personalIdKeyU2!=null && !personalIdKeyU1.isEmpty() && !personalIdKeyU2.isEmpty() && personalIdKeyU1.equals(personalIdKeyU2)){
+                        duplicats.add("Gsuite - L'usuari "+u1.getPrimaryEmail()+" té el mateix codi Gsuite Personal ID que l'usuari "+u2.getPrimaryEmail());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            duplicats.add("Error cercant duplicats a GSuite");
+        }
+
+        return new ResponseEntity<>(duplicats, HttpStatus.OK);
     }
 
     /*
@@ -1109,6 +1192,7 @@ public class SincronitzacioController {
                         personalIdKey = valueValue;
                     }
                 } catch (Exception e) {
+                    log.error("Error cercant personalIdKey de l'usuari " + email);
                 }
 
 
@@ -1124,6 +1208,7 @@ public class SincronitzacioController {
                 } else {
                     resultat.add("L'usuari no existeix. Creant usuari " + email + " amb clau " + personalIdKey);
                 }
+
             }
         } catch (ParserConfigurationException | SAXException | IOException | CloneNotSupportedException |
                  InterruptedException ex) {
@@ -1566,9 +1651,12 @@ public class SincronitzacioController {
                             personalIdKey = valueValue;
                         }
                     } catch (Exception e) {
+                        log.error("Error cercant personalIdKey de l'usuari " + email);
                     }
 
-                    if (usuariGestib.getGsuiteEmail().equals(email) && usuariGestib.getGsuitePersonalID().equals(personalIdKey)) {
+                    boolean correctPersonalIDKey = ((usuariGestib.getGestibAlumne() || usuariGestib.getGestibProfessor()) && !personalIdKey.isEmpty()) || (!usuariGestib.getGestibAlumne() && !usuariGestib.getGestibProfessor());
+
+                    if (correctPersonalIDKey && usuariGestib.getGsuiteEmail().equals(email) && usuariGestib.getGsuitePersonalID().equals(personalIdKey)) {
                         trobat = true;
                         break;
                     }
@@ -1621,8 +1709,8 @@ public class SincronitzacioController {
                     personalIdKey = valueValue;
                 }
             } catch (Exception e) {
+                log.error("Error cercant personalIdKey de l'usuari " + email);
             }
-
 
             UsuariDto u = usuariService.findByGestibCodiOrEmail(personalIdKey, email);
             log.info("Personal Key:" + personalIdKey + "E-mail:" + email);
@@ -1664,7 +1752,7 @@ public class SincronitzacioController {
                 }
 
                 usuariService.save(u);
-            } else if(u != null){ //Si l'usuari no és null i entra vol dir que eliminat = true
+            } else if (u != null) { //Si l'usuari no és null i entra vol dir que eliminat = true
                 u.setGsuitePersonalID(null);
                 u.setGsuiteEmail(null);
                 usuariService.save(u);
@@ -1673,7 +1761,6 @@ public class SincronitzacioController {
                 boolean actiu = personalIdKey == null || personalIdKey.isEmpty();
                 usuariService.saveGSuite(email, isAdmin, personalIdKey, isSuspes, unitatOrganitzativa, givenName, familyName, fullName, actiu);
             }
-
         }
 
         log.info("Sincronització correcte amb GSuite cap a la BBDD");
@@ -1697,6 +1784,10 @@ public class SincronitzacioController {
                     usuari.getActiu() != null && usuari.getActiu() &&
                     usuari.getGsuiteEmail() == null) {
                 String username = this.generateUsername(usuari, this.formatEmailProfessors);
+                if(username == null){
+                    log.error("Error creant el correu del professor " + usuari.getGestibNom() + " " + usuari.getGestibCognom1() + " " + usuari.getGestibCognom2());
+                    continue;
+                }
 
                 log.info("Username: " + username);
                 String nom = usuari.getGestibNom();
@@ -2468,6 +2559,18 @@ public class SincronitzacioController {
         String nom = removeAccents(usuari.getGestibNom());
         String cognom1 = removeAccents(usuari.getGestibCognom1());
         String cognom2 = removeAccents(usuari.getGestibCognom2());
+        String codiGestib = usuari.getGestibCodi();
+
+        //Comprovació de seguretat
+        if(codiGestib != null && !codiGestib.isEmpty()){
+            List<User> usuaris = gSuiteService.getUserByIdExternal(codiGestib);
+
+            //Si trobem resultat vol dir que ja hi és i no s'ha de tornar a crear
+            if(usuaris != null && !usuaris.isEmpty()){
+                log.error("NO s'ha generat el username. L'usuari amb codi {} ja existeix a GSuite.", codiGestib);
+                return null;
+            }
+        }
 
         //Default
         String username = nom.trim() + cognom1.trim() + cognom2.trim();
