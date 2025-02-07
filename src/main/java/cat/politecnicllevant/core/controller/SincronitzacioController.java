@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,6 +30,7 @@ import javax.mail.MessagingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
+import javax.ws.rs.QueryParam;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -300,6 +298,41 @@ public class SincronitzacioController {
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
 
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
+    }
+
+    @PostMapping("/sync/overridegestibfromgsuite")
+    public ResponseEntity<List<String>> overribeGestibFromGSuite(@QueryParam("simula") boolean simula) throws InterruptedException {
+        List<User> usuarisGSuite = gSuiteService.getUsers();
+
+        List<String> resultat = new ArrayList<>();
+
+        for(User usuariGSuite: usuarisGSuite){
+            String personalID = "";
+
+            try {
+                List<ArrayMap> list = (List<ArrayMap>) usuariGSuite.getExternalIds();
+                ArrayMap userKey = list.stream().filter(u -> u.get("type").equals("organization")).findFirst().orElse(null);
+                personalID = (String) userKey.get("value");
+            } catch (Exception e) {
+                log.error("Error llegint el personalID de l'usuari " + usuariGSuite.getPrimaryEmail());
+            }
+
+            if(personalID!=null && !personalID.isEmpty()){
+                UsuariDto usuariGestib = usuariService.findByGSuitePersonalID(personalID);
+                if(usuariGestib!=null){
+                    if(!usuariGestib.getGsuiteEmail().equals(usuariGSuite.getPrimaryEmail())){
+                        resultat.add("L'usuari "+usuariGestib.getGsuiteEmail()+" té el mateix codi personalID que l'usuari "+usuariGSuite.getPrimaryEmail()+". Actualitzat usuari Gestib");
+                        if(!simula) {
+                            usuariGestib.setGsuiteEmail(usuariGSuite.getPrimaryEmail());
+                            usuariGestib.setGsuiteEliminat(false);
+                            usuariGestib.setGsuiteSuspes(usuariGSuite.getSuspended());
+                            usuariService.save(usuariGestib);
+                        }
+                    }
+                }
+            }
+        }
+        return new ResponseEntity<>(resultat, HttpStatus.OK);
     }
 
     @PostMapping("/sync/mergegsuitegestib")
