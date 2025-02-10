@@ -301,7 +301,7 @@ public class SincronitzacioController {
     }
 
     @PostMapping("/sync/overridegestibfromgsuite")
-    public ResponseEntity<List<String>> overribeGestibFromGSuite(@QueryParam("simula") boolean simula) throws InterruptedException {
+    public ResponseEntity<Notificacio> overribeGestibFromGSuite(@QueryParam("simula") boolean simula) throws InterruptedException, MessagingException, GeneralSecurityException, IOException {
         List<User> usuarisGSuite = gSuiteService.getUsers();
 
         List<String> resultat = new ArrayList<>();
@@ -332,7 +332,21 @@ public class SincronitzacioController {
                 }
             }
         }
-        return new ResponseEntity<>(resultat, HttpStatus.OK);
+
+        String titol = "Actualització de l'usuari Gestib amb les dades de GSuite";
+        if(simula){
+            titol = "SIMULACIÓ - "+titol;
+        } else {
+            titol = "REAL - "+titol;
+        }
+
+        gMailService.sendMessage("Sincronització log", String.join("<br>", resultat), this.adminUser);
+
+        Notificacio notificacio = new Notificacio();
+        notificacio.setNotifyMessage("Actualització de l'usuari Gestib amb les dades de GSuite INICIAT. Rebrà un correu electrònic en acabar el resultat.");
+        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+
+        return new ResponseEntity<>(notificacio, HttpStatus.OK);
     }
 
     @PostMapping("/sync/mergegsuitegestib")
