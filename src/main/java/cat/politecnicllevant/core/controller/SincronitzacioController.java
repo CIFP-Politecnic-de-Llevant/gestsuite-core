@@ -362,7 +362,7 @@ public class SincronitzacioController {
         for (User usuariGSuite : usuarisGSuite) {
             boolean trobat = false;
             for (UsuariDto usuari : usuaris) {
-                if (usuari.getGsuiteEmail().equals(usuariGSuite.getPrimaryEmail())) {
+                if (usuari.getGsuiteEmail() == null || usuari.getGsuiteEmail().equals(usuariGSuite.getPrimaryEmail())) {
                     trobat = true;
                     break;
                 }
