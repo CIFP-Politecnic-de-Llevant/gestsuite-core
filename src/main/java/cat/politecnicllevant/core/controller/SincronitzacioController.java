@@ -385,6 +385,12 @@ public class SincronitzacioController {
                     log.error("Error llegint el personalID de l'usuari " + usuariGSuite.getPrimaryEmail());
                 }
 
+                if(usuariDto.getGestibAlumne() == null){
+                    usuariDto.setGestibAlumne(false);
+                }
+                if(usuariDto.getGestibProfessor() == null){
+                    usuariDto.setGestibProfessor(false);
+                }
                 boolean correctPersonalIDKey = ((usuariDto.getGestibAlumne() || usuariDto.getGestibProfessor()) && !personalID.isEmpty()) || (!usuariDto.getGestibAlumne() && !usuariDto.getGestibProfessor());
 
                 if(correctPersonalIDKey) {
@@ -1701,6 +1707,12 @@ public class SincronitzacioController {
                         log.error("Error cercant personalIdKey de l'usuari " + email);
                     }
 
+                    if(usuariGestib.getGestibAlumne() == null){
+                        usuariGestib.setGestibAlumne(false);
+                    }
+                    if(usuariGestib.getGestibProfessor() == null){
+                        usuariGestib.setGestibProfessor(false);
+                    }
                     boolean correctPersonalIDKey = ((usuariGestib.getGestibAlumne() || usuariGestib.getGestibProfessor()) && !personalIdKey.isEmpty()) || (!usuariGestib.getGestibAlumne() && !usuariGestib.getGestibProfessor());
 
                     if (correctPersonalIDKey && usuariGestib.getGsuiteEmail().equals(email) && usuariGestib.getGsuitePersonalID().equals(personalIdKey)) {
