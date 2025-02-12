@@ -460,17 +460,29 @@ public class SincronitzacioController {
                             u.setGestibCodiOriginal(codiOriginal);
                             usuariService.save(u);
 
-                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
-                            gSuiteService.updateUser(
-                                    gsuiteUser.getPrimaryEmail(),
-                                    gsuiteUser.getName().getGivenName(),
-                                    gsuiteUser.getName().getFamilyName(),
-                                    codi,
-                                    gsuiteUser.getOrgUnitPath()
-                            );
+                            if(u.getGsuiteEmail()==null){
+                                List<User> user = gSuiteService.getUserByIdExternal(codi);
+                                if(user.size()==1){
+                                    u.setGsuiteEmail(user.get(0).getPrimaryEmail());
+                                    usuariService.save(u);
+                                }
+                            }
 
-                            resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
-                            mesclats++;
+                            if(u.getGsuiteEmail()!=null) {
+                                User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                                gSuiteService.updateUser(
+                                        gsuiteUser.getPrimaryEmail(),
+                                        gsuiteUser.getName().getGivenName(),
+                                        gsuiteUser.getName().getFamilyName(),
+                                        codi,
+                                        gsuiteUser.getOrgUnitPath()
+                                );
+
+                                resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  " + codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                                mesclats++;
+                            } else {
+                                resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no té usuari GSuite associat o en té varis.");
+                            }
                         } else if (usuarisCandidats.size() > 1) {
                             resultat.add("El professor " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
                             for (UsuariDto usuariCandidat : usuarisCandidats) {
@@ -519,17 +531,30 @@ public class SincronitzacioController {
                             u.setGestibCodiOriginal(codiOriginal);
                             usuariService.save(u);
 
-                            User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
-                            gSuiteService.updateUser(
-                                    gsuiteUser.getPrimaryEmail(),
-                                    gsuiteUser.getName().getGivenName(),
-                                    gsuiteUser.getName().getFamilyName(),
-                                    codi,
-                                    gsuiteUser.getOrgUnitPath()
-                            );
+                            if(u.getGsuiteEmail()==null){
+                                List<User> user = gSuiteService.getUserByIdExternal(codi);
+                                if(user.size()==1){
+                                    u.setGsuiteEmail(user.get(0).getPrimaryEmail());
+                                    usuariService.save(u);
+                                }
+                            }
 
-                            resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
-                            mesclats++;
+                            if(u.getGsuiteEmail()!=null) {
+
+                                User gsuiteUser = gSuiteService.getUserById(u.getGsuiteEmail());
+                                gSuiteService.updateUser(
+                                        gsuiteUser.getPrimaryEmail(),
+                                        gsuiteUser.getName().getGivenName(),
+                                        gsuiteUser.getName().getFamilyName(),
+                                        codi,
+                                        gsuiteUser.getOrgUnitPath()
+                                );
+
+                                resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  " + codi + "  ) s'ha associat a l'usuari " + u.getGsuiteEmail() + " - " + u.getGsuiteGivenName() + " " + u.getGsuiteFamilyName());
+                                mesclats++;
+                            } else {
+                                resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) no té usuari GSuite associat o en té varis.");
+                            }
                         } else if (usuarisCandidats.size() > 1) {
                             resultat.add("L'alumne " + nom + " " + ap1 + " " + ap2 + " (  "+ codi + "  ) té vàries opcions:");
                             for (UsuariDto usuariCandidat : usuarisCandidats) {
