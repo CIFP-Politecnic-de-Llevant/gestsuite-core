@@ -69,8 +69,8 @@ public class GoogleStorageController {
 
 
     @PostMapping("/googlestorage/uploadobject")
-    public ResponseEntity<FitxerBucketDto> uploadObject(@RequestParam("objectName") String objectName, @RequestParam("filePath") String filePath, @RequestParam("bucket") String bucket) throws IOException, GeneralSecurityException{
-        FitxerBucketDto fitxerBucketDto = googleStorageService.uploadObject(objectName, filePath, bucket);
+    public ResponseEntity<FitxerBucketDto> uploadObject(@RequestParam("objectName") String objectName, @RequestParam("filePath") String filePath, @RequestParam("contentType") String contentType, @RequestParam("bucket") String bucket) throws IOException, GeneralSecurityException{
+        FitxerBucketDto fitxerBucketDto = googleStorageService.uploadObject(objectName, filePath, contentType, bucket);
         return new ResponseEntity<>(fitxerBucketDto, HttpStatus.OK);
     }
 

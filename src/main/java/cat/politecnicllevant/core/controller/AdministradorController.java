@@ -82,7 +82,7 @@ public class AdministradorController {
                 // The ID of your GCS object
                 String objectName = "backup_" +nameDatabase+"_"+ today + ".sql";
 
-                googleStorageService.uploadObject(objectName, filePath,bucketName);
+                googleStorageService.uploadObject(objectName, filePath,"application/sql", bucketName );
 
                 log.info("File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
 

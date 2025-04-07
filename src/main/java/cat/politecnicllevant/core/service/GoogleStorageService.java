@@ -28,13 +28,13 @@ public class GoogleStorageService {
     @Value("${gc.adminUser}")
     private String adminUser;
 
-    public FitxerBucketDto uploadObject(String objectName, String filePath, String bucketName) throws IOException, GeneralSecurityException {
+    public FitxerBucketDto uploadObject(String objectName, String filePath, String contentType, String bucketName) throws IOException, GeneralSecurityException {
         String[] scopes = {StorageScopes.DEVSTORAGE_READ_WRITE};
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser);
 
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         BlobId blobId = BlobId.of(bucketName, objectName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/pdf").build();
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
 
         //Per arxius petits podem fer simplement un storage.create
         //storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));
