@@ -350,6 +350,19 @@ public class UsuariController {
                     }
                 }
 
+                // Comprovem si és tutor del grup
+                if(!tutorsFCT.contains(profe)){
+                    List<GrupDto> grupsProfeAsTutor = grupService.findByTutor(profe);
+                    for (GrupDto grupProfe : grupsProfeAsTutor) {
+                        for(GrupDto grupTutor : grups) {
+                            if (!tutorsFCT.contains(profe) && grupProfe.getGestibIdentificador().equals(grupTutor.getGestibIdentificador())) {
+                                tutorsFCT.add(profe);
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 //Si imparteix alguna submatèria al grup comprovem també si té el rol de Tutor FCT
                 if(imparteixSubmateriaGrup && profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
                     tutorsFCT.add(profe);
