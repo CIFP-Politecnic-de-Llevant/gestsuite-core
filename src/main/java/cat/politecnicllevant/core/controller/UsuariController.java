@@ -543,4 +543,14 @@ public class UsuariController {
             throw new Exception("Sense permisos");
         }
     }
+
+    @GetMapping("/usuari/profile/{email}")
+    public ResponseEntity<UsuariDto> getPublicProfileByEmail(@PathVariable("email") String email) {
+        return new ResponseEntity<>(usuariService.findByEmail(email), HttpStatus.OK);
+    }
+
+    @GetMapping("/usuaris/llistat")
+    public ResponseEntity<List<UsuariDto>> getAllUsuaris() {
+        return new ResponseEntity<>(usuariService.findAll(), HttpStatus.OK);
+    }
 }
