@@ -33,9 +33,17 @@ public class UsuariService {
         if (usuari.getGsuiteEmail() != null && !usuari.getGsuiteEmail().isEmpty()) {
             Usuari existent = usuariRepository.findUsuariByGsuiteEmail(usuari.getGsuiteEmail());
             if (existent != null && (usuari.getIdusuari() == null || !existent.getIdusuari().equals(usuari.getIdusuari()))) {
-                // Mapegem els canvis sobre l'entitat existent per a conservar la resta de camps
+                // Mapegem els canvis sobre l'entitat existent per a conservar la resta de camps.
+                // Cal assegurar que l'identificador de la instància gestionada no es modifica,
+                // ja que Hibernate no permet canviar la clau primària d'un entity que està en
+                // el context de persistència. El DTO pot contenir un id diferent (o nul) i,
+                // si es copia directament, provocarà l'excepció
+                // "identifier of an instance was altered".
                 entity = existent;
+                Long idOriginal = entity.getIdusuari();
                 modelMapper.map(usuari, entity);
+                // Restablim l'id original per a evitar que s'alteri l'identificador
+                entity.setIdusuari(idOriginal);
             } else {
                 entity = modelMapper.map(usuari, Usuari.class);
             }
