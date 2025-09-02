@@ -1270,7 +1270,7 @@ public class SincronitzacioController {
                         personalIdKey = valueValue;
                     }
                 } catch (Exception e) {
-                    log.error("Error cercant personalIdKey de l'usuari " + email);
+                    log.debug("Error cercant personalIdKey de l'usuari " + email);
                 }
 
 
@@ -1729,7 +1729,7 @@ public class SincronitzacioController {
                             personalIdKey = valueValue;
                         }
                     } catch (Exception e) {
-                        log.error("Error cercant personalIdKey de l'usuari " + email);
+                        log.debug("Error cercant personalIdKey de l'usuari " + email);
                     }
 
                     if(usuariGestib.getGestibAlumne() == null){
@@ -1793,7 +1793,7 @@ public class SincronitzacioController {
                     personalIdKey = valueValue;
                 }
             } catch (Exception e) {
-                log.error("Error cercant personalIdKey de l'usuari " + email);
+                log.debug("Error cercant personalIdKey de l'usuari " + email);
             }
 
             UsuariDto u = usuariService.findByGestibCodiOrEmail(personalIdKey, email);
