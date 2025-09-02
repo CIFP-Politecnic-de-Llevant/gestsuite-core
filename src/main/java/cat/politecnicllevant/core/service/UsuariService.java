@@ -25,8 +25,25 @@ public class UsuariService {
     @Transactional
     public UsuariDto save(UsuariDto usuari) {
         ModelMapper modelMapper = new ModelMapper();
-        Usuari u = modelMapper.map(usuari,Usuari.class);
-        Usuari usuariSaved = usuariRepository.save(u);
+
+        // Abans de desar comprovam si ja existeix un usuari amb el mateix
+        // correu de GSuite. En aquest cas actualitzam l'usuari existent per
+        // evitar l'excepció de clau duplicada i mantenir la unicitat del camp.
+        Usuari entity;
+        if (usuari.getGsuiteEmail() != null && !usuari.getGsuiteEmail().isEmpty()) {
+            Usuari existent = usuariRepository.findUsuariByGsuiteEmail(usuari.getGsuiteEmail());
+            if (existent != null && (usuari.getIdusuari() == null || !existent.getIdusuari().equals(usuari.getIdusuari()))) {
+                // Mapegem els canvis sobre l'entitat existent per a conservar la resta de camps
+                entity = existent;
+                modelMapper.map(usuari, entity);
+            } else {
+                entity = modelMapper.map(usuari, Usuari.class);
+            }
+        } else {
+            entity = modelMapper.map(usuari, Usuari.class);
+        }
+
+        Usuari usuariSaved = usuariRepository.save(entity);
 
         return modelMapper.map(usuariSaved,UsuariDto.class);
     }
