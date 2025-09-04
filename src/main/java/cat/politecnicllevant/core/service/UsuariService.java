@@ -5,6 +5,7 @@ import cat.politecnicllevant.core.dto.gestib.UsuariDto;
 import cat.politecnicllevant.core.model.gestib.Usuari;
 import cat.politecnicllevant.core.repository.gestib.DepartamentRepository;
 import cat.politecnicllevant.core.repository.gestib.UsuariRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class UsuariService {
     @Autowired
     private UsuariRepository usuariRepository;
@@ -146,12 +148,17 @@ public class UsuariService {
     }
 
     public UsuariDto findByGestibCodi(String codi) {
-        ModelMapper modelMapper = new ModelMapper();
-        Usuari usuari = usuariRepository.findUsuariByGestibCodi(codi);
-        if(usuari!=null) {
-            return modelMapper.map(usuari, UsuariDto.class);
+        try {
+            ModelMapper modelMapper = new ModelMapper();
+            Usuari usuari = usuariRepository.findUsuariByGestibCodi(codi);
+            if (usuari != null) {
+                return modelMapper.map(usuari, UsuariDto.class);
+            }
+            return null;
+        } catch (Exception ex) {
+            log.error("Error cercant usuari per codi Gestib: " + codi, ex);
+            return null;
         }
-        return null;
     }
 
     public UsuariDto findByGSuitePersonalID(String codi) {
