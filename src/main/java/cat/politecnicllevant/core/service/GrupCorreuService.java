@@ -6,6 +6,7 @@ import cat.politecnicllevant.core.dto.gestib.UsuariDto;
 import cat.politecnicllevant.core.dto.gestib.UsuariGrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuDto;
 import cat.politecnicllevant.core.dto.google.GrupCorreuTipusDto;
+import cat.politecnicllevant.core.model.gestib.Departament;
 import cat.politecnicllevant.core.model.gestib.Grup;
 import cat.politecnicllevant.core.model.gestib.Usuari;
 import cat.politecnicllevant.core.model.gestib.UsuariGrupCorreu;
@@ -199,6 +200,13 @@ public class GrupCorreuService {
     }
 
     @Transactional
+    public void insertDepartament(GrupCorreuDto grupCorreu, DepartamentDto departamentDto) {
+        ModelMapper modelMapper = new ModelMapper();
+        Departament departament = modelMapper.map(departamentDto, Departament.class);
+        grupCorreuRepository.findById(grupCorreu.getIdgrup()).get().getDepartaments().add(departament);
+    }
+
+    @Transactional
     public void esborrarGrupsGrupCorreu(GrupCorreuDto grupCorreuDto) {
         Set<Grup> grups = new HashSet<>(grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getGrups());
         for (Grup grup : grups) {
@@ -206,6 +214,13 @@ public class GrupCorreuService {
         }
     }
 
+    @Transactional
+    public void esborrarDepartamentsGrupCorreu(GrupCorreuDto grupCorreuDto) {
+        Set<Departament> departaments = new HashSet<>(grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getDepartaments());
+        for (Departament departament : departaments) {
+            grupCorreuRepository.findById(grupCorreuDto.getIdgrup()).get().getGrups().remove(departament);
+        }
+    }
 
     @Transactional
     public void insertGrupCorreu(GrupCorreuDto grupCorreu, GrupCorreuDto membreGrupCorreuDto) {

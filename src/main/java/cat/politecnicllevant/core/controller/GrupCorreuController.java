@@ -59,9 +59,6 @@ public class GrupCorreuController {
     private DepartamentService departamentService;
 
     @Autowired
-    private UsuariGrupCorreuService usuariGrupCorreuService;
-
-    @Autowired
     private TokenManager tokenManager;
 
     @Autowired
@@ -249,6 +246,7 @@ public class GrupCorreuController {
         }
 
 
+
         GrupCorreuDto grupCorreu = new GrupCorreuDto();
 
         if(jsonObject.get("idgrup")!=null && !jsonObject.get("idgrup").isJsonNull()){
@@ -308,6 +306,15 @@ public class GrupCorreuController {
             }
         }
 
+        List<DepartamentDto> departaments = new ArrayList<>();
+        if(jsonObject.get("departamentGestibIdentificador")!=null && !jsonObject.get("departamentGestibIdentificador").isJsonNull()) {
+            String departamentGestibIdentificador = jsonObject.get("departamentGestibIdentificador").getAsString();
+            DepartamentDto departament = departamentService.findByGestibIdentificador(departamentGestibIdentificador);
+            if(departament!=null){
+                departaments.add(departament);
+            }
+        }
+
         //GRUPS DE CORREU
         List<GrupCorreuDto> grupsCorreu = new ArrayList<>();
         for(JsonElement jsonGrupCorreu: jsonGrupsCorreu){
@@ -331,6 +338,10 @@ public class GrupCorreuController {
         //Esborrem els grups del grup de correu
         grupCorreuService.esborrarGrupsGrupCorreu(grupCorreuSaved);
         grupCorreuSaved.setGrups(new HashSet<>());
+
+        //Esborrem els departaments del grup de correu
+        grupCorreuService.esborrarDepartamentsGrupCorreu(grupCorreuSaved);
+        grupCorreuSaved.setDepartaments(new HashSet<>());
 
         //Esborrem els grups de correu del grup de correu
         grupCorreuService.esborrarGrupsCorreuGrupCorreu(grupCorreuSaved);
@@ -359,6 +370,12 @@ public class GrupCorreuController {
             grupCorreuService.insertGrup(grupCorreuSaved, grup);
         }
         grupCorreuSaved.setGrups(new HashSet<>(grups));
+
+        //Tornem a inserir els departaments
+        for(DepartamentDto departament: departaments){
+            grupCorreuService.insertDepartament(grupCorreuSaved, departament);
+        }
+        grupCorreuSaved.setDepartaments(new HashSet<>(departaments));
 
         //Tornem a inserir els grups
         for (GrupCorreuDto grupCorreuMember : grupsCorreu) {
