@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -335,6 +336,20 @@ public class UsuariService {
         List<Usuari> usuaris = usuariRepository.findAll();
         for (Usuari usuari : usuaris) {
             usuari.setActiu(false);
+            usuariRepository.save(usuari);
+        }
+    }
+
+    @Transactional
+    public void restaurarEstatActiu(Map<Long, Boolean> estatActiuOriginal) {
+        if (estatActiuOriginal == null || estatActiuOriginal.isEmpty()) {
+            return;
+        }
+
+        List<Usuari> usuaris = usuariRepository.findAllById(estatActiuOriginal.keySet());
+        for (Usuari usuari : usuaris) {
+            Boolean actiu = estatActiuOriginal.get(usuari.getIdusuari());
+            usuari.setActiu(actiu);
             usuariRepository.save(usuari);
         }
     }
