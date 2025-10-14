@@ -338,6 +338,24 @@ public class UsuariService {
             usuariRepository.save(usuari);
         }
     }
+
+    @Transactional
+    public void restaurarActius(List<UsuariDto> usuarisOriginals) {
+        if (usuarisOriginals == null) {
+            return;
+        }
+
+        for (UsuariDto usuariOriginal : usuarisOriginals) {
+            if (usuariOriginal == null || usuariOriginal.getIdusuari() == null) {
+                continue;
+            }
+
+            usuariRepository.findById(usuariOriginal.getIdusuari()).ifPresent(usuari -> {
+                usuari.setActiu(usuariOriginal.getActiu());
+                usuariRepository.save(usuari);
+            });
+        }
+    }
     @Transactional
     public void suspendreUsuari(UsuariDto usuari) {
         usuari.setGsuiteSuspes(true);

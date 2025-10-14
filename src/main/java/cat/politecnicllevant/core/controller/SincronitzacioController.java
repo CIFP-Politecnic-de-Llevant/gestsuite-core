@@ -807,44 +807,57 @@ public class SincronitzacioController {
             if (usuarisNoActiusBeforeSync == null) {
                 usuarisNoActiusBeforeSync = new ArrayList<>();
             }
-            this.desactivarUsuaris();
-            log.info("Actualitzant XML a la base de dades...");
-            List<UsuariDto> usuarisGestib = this.gestibxmltodatabase(centre, usuarisNoActiusBeforeSync);
 
-            log.info("Actualitzant usuaris GSuite a la base de dades...");
-            List<UsuariDto> usuarisGSuite = this.gsuiteuserstodatabase();
+            List<UsuariDto> estatInicialUsuaris = usuariService.findAll(true);
 
-            List<UsuariDto> usuarisUpdate = new ArrayList<>();
-            usuarisUpdate.addAll(usuarisGestib);
-            usuarisUpdate.addAll(usuarisGSuite);
+            try {
+                this.desactivarUsuaris();
+                log.info("Actualitzant XML a la base de dades...");
+                List<UsuariDto> usuarisGestib = this.gestibxmltodatabase(centre, usuarisNoActiusBeforeSync);
 
-            log.info("Creant usuaris nous...");
-            this.createNewUsers(usuarisUpdate, centre);
+                log.info("Actualitzant usuaris GSuite a la base de dades...");
+                List<UsuariDto> usuarisGSuite = this.gsuiteuserstodatabase();
 
-            log.info("Reassignar grups professors i alumnes");
-            if (centre.getSincronitzaProfessors()) {
-                this.reassignarGrupsProfessor();
+                List<UsuariDto> usuarisUpdate = new ArrayList<>();
+                usuarisUpdate.addAll(usuarisGestib);
+                usuarisUpdate.addAll(usuarisGSuite);
+
+                log.info("Creant usuaris nous...");
+                this.createNewUsers(usuarisUpdate, centre);
+
+                log.info("Reassignar grups professors i alumnes");
+                if (centre.getSincronitzaProfessors()) {
+                    this.reassignarGrupsProfessor();
+                }
+                if (centre.getSincronitzaAlumnes()) {
+                    this.reassignarGrupsAlumne();
+                }
+
+                log.info("Esborrant grups d'usuaris no actius");
+                this.esborrarGrupsUsuarisNoActius();
+
+                log.info("Actualitzant Grups de Correu a la base de dades...");
+                this.createGrupsCorreuGSuiteToDatabase();
+                this.deleteGrupsCorreuGSuiteToDatabase();
+                this.updateGrupsCorreuGSuiteToDatabase();
+
+
+                log.info("Actualitació de centre. Sincronització acabada");
+                this.updateCentre(centre);
+
+                gMailService.sendMessage("Sincronització log", String.join("<br>", logSimulacio), this.adminUser);
+            } catch (MessagingException | GeneralSecurityException | IOException | InterruptedException e) {
+                log.error("Error durant la sincronització. Es restaurarà l'estat dels usuaris.", e);
+                usuariService.restaurarActius(estatInicialUsuaris);
+                throw e;
+            } catch (RuntimeException e) {
+                log.error("Error inesperat durant la sincronització. Es restaurarà l'estat dels usuaris.", e);
+                usuariService.restaurarActius(estatInicialUsuaris);
+                throw e;
+            } finally {
+                centre.setSincronitzant(false);
+                centreService.save(centre);
             }
-            if (centre.getSincronitzaAlumnes()) {
-                this.reassignarGrupsAlumne();
-            }
-
-            log.info("Esborrant grups d'usuaris no actius");
-            this.esborrarGrupsUsuarisNoActius();
-
-            log.info("Actualitzant Grups de Correu a la base de dades...");
-            this.createGrupsCorreuGSuiteToDatabase();
-            this.deleteGrupsCorreuGSuiteToDatabase();
-            this.updateGrupsCorreuGSuiteToDatabase();
-
-
-            log.info("Actualitació de centre. Sincronització acabada");
-            this.updateCentre(centre);
-
-            gMailService.sendMessage("Sincronització log", String.join("<br>", logSimulacio), this.adminUser);
-
-            centre.setSincronitzant(false);
-            centreService.save(centre);
         }
     }
 
