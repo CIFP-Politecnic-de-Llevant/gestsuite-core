@@ -3,7 +3,6 @@ package cat.politecnicllevant.core.controller;
 import cat.politecnicllevant.common.model.Notificacio;
 import cat.politecnicllevant.common.model.NotificacioTipus;
 import cat.politecnicllevant.core.dto.gestib.*;
-import cat.politecnicllevant.core.model.gestib.Rol;
 import cat.politecnicllevant.core.service.*;
 import com.google.api.services.directory.model.Group;
 import io.jsonwebtoken.Claims;
@@ -209,7 +208,7 @@ public class UsuariController {
                                 myUser != null &&
                                         usuari != null &&
                                         myUser.getGsuiteEmail() != null &&
-                                        usuari.getGsuiteEmail() != null &&
+//                                        usuari.getGsuiteEmail() != null &&
                                         (
                                                 myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                                                         rols.contains(RolDto.ADMINISTRADOR) ||
