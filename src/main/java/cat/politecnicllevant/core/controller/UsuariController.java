@@ -208,7 +208,7 @@ public class UsuariController {
                                 myUser != null &&
                                         usuari != null &&
                                         myUser.getGsuiteEmail() != null &&
-//                                        usuari.getGsuiteEmail() != null &&
+                                        usuari.getGsuiteEmail() != null &&
                                         (
                                                 myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                                                         rols.contains(RolDto.ADMINISTRADOR) ||
@@ -424,7 +424,7 @@ public class UsuariController {
                 myUser != null &&
                 usuari != null &&
                 myUser.getGsuiteEmail() != null &&
-//                usuari.getGsuiteEmail() != null &&
+                usuari.getGsuiteEmail() != null &&
                 (
                     myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                     rols.contains(RolDto.ADMINISTRADOR) ||
@@ -466,7 +466,7 @@ public class UsuariController {
                     myUser != null &&
                     usuari != null &&
                     myUser.getGsuiteEmail() != null &&
-//                    usuari.getGsuiteEmail() != null &&
+                    usuari.getGsuiteEmail() != null &&
                     (
                             myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                             rols.contains(RolDto.ADMINISTRADOR) ||
@@ -504,7 +504,7 @@ public class UsuariController {
                                 myUser != null &&
                                         usuari != null &&
                                         myUser.getGsuiteEmail() != null &&
-//                                        usuari.getGsuiteEmail() != null &&
+                                        usuari.getGsuiteEmail() != null &&
                                         (
                                                 myUser.getGsuiteEmail().equals(usuari.getGsuiteEmail()) ||
                                                         rols.contains(RolDto.ADMINISTRADOR) ||
