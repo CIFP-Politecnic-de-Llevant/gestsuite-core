@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -70,40 +74,42 @@ public class AdministradorController {
         String[] databases = this.nameDatabases.split(",");
 
         for(String nameDatabase: databases){
-            // The path to your file to upload
-            String filePath = pathTemporal + "/backup_" +nameDatabase+"_"+ today + ".sql";
+            if (nameDatabase.isEmpty()) continue;
+            String fileName = "backup_" + nameDatabase + "_" + today + ".sql";
+            Path filePath = Paths.get(pathTemporal, fileName);
 
-            String dump = "mysqldump -u" + userDatabase + " -p" + passwordDatabase + " " + nameDatabase + " > " + filePath;
-            String[] cmdarray = {"/bin/sh", "-c", dump};
-            Process p = Runtime.getRuntime().exec(cmdarray);
-            if (p.waitFor() == 0) {
-                // Everything went fine
+            String command = "mysqldump --column-statistics=0 --no-tablespaces -u" + userDatabase + " " + nameDatabase;
+            ProcessBuilder processBuilder = new ProcessBuilder("/bin/sh", "-c", command);
+
+            // Set MYSQL_PWD environment variable for the password. This is more secure.
+            processBuilder.environment().put("MYSQL_PWD", passwordDatabase);
+
+            // Redirect the output of the process to the backup file.
+            processBuilder.redirectOutput(filePath.toFile());
+
+            // Redirect error stream to prevent the process from blocking.
+            // We can discard it if we are not interested in the error output for now.
+            processBuilder.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0) {
+                log.info("Backup for database '{}' created successfully at '{}'", nameDatabase, filePath);
 
                 // The ID of your GCS object
-                String objectName = "backup_" +nameDatabase+"_"+ today + ".sql";
+                String objectName = fileName;
 
-                googleStorageService.uploadObject(objectName, filePath,"application/sql", bucketName );
+                googleStorageService.uploadObject(objectName, filePath.toString(),"application/sql", bucketName );
+                log.info("File {} uploaded to bucket {} as {}", filePath, bucketName, objectName);
 
-                log.info("File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
+                // Delete the local backup file in a safer way
+                Files.deleteIfExists(filePath);
+                log.info("Local backup file '{}' deleted successfully.", filePath);
 
-                String deleteBackup = "rm -fr " + pathTemporal + "/*.sql";
-                String[] cmdarrayDeleteBackup = {"/bin/sh", "-c", deleteBackup};
-                Process pDeleteBackup = Runtime.getRuntime().exec(cmdarrayDeleteBackup);
-                if (pDeleteBackup.waitFor() == 0) {
-                    // Everything went fine
-                    log.info("Arxius SQL esborrats amb èxit");
-                } else {
-                    // Something went wrong
-                    log.error("Error esborrant els arxius SQL. Comanda: "+deleteBackup);
-                }
             } else {
-                // Something went wrong
-                log.error("Error fent el backup");
+                log.error("Error creating backup for database '{}'. mysqldump exited with code: {}", nameDatabase, exitCode);
             }
         }
-
-
     }
-
-
 }
