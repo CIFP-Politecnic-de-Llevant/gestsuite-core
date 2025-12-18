@@ -799,52 +799,62 @@ public class SincronitzacioController {
             centre.setSincronitzant(true);
             centreService.save(centre);
 
-            List<String> logSimulacio = new ArrayList<>();
-            logSimulacio.add("Resultat sincronització v. 3.0");
-            logSimulacio.addAll(this.simular());
+            Map<Long, Boolean> estatActiuOriginal = usuariService.findAll(true).stream()
+                    .filter(u -> u.getIdusuari() != null)
+                    .collect(Collectors.toMap(UsuariDto::getIdusuari, UsuariDto::getActiu, (existing, replacement) -> existing));
 
-            List<UsuariDto> usuarisNoActiusBeforeSync = usuariService.findUsuarisNoActius();
-            if (usuarisNoActiusBeforeSync == null) {
-                usuarisNoActiusBeforeSync = new ArrayList<>();
+            try {
+                List<String> logSimulacio = new ArrayList<>();
+                logSimulacio.add("Resultat sincronització v. 3.0");
+                logSimulacio.addAll(this.simular());
+
+                List<UsuariDto> usuarisNoActiusBeforeSync = usuariService.findUsuarisNoActius();
+                if (usuarisNoActiusBeforeSync == null) {
+                    usuarisNoActiusBeforeSync = new ArrayList<>();
+                }
+                this.desactivarUsuaris();
+                log.info("Actualitzant XML a la base de dades...");
+                List<UsuariDto> usuarisGestib = this.gestibxmltodatabase(centre, usuarisNoActiusBeforeSync);
+
+                log.info("Actualitzant usuaris GSuite a la base de dades...");
+                List<UsuariDto> usuarisGSuite = this.gsuiteuserstodatabase();
+
+                List<UsuariDto> usuarisUpdate = new ArrayList<>();
+                usuarisUpdate.addAll(usuarisGestib);
+                usuarisUpdate.addAll(usuarisGSuite);
+
+                log.info("Creant usuaris nous...");
+                this.createNewUsers(usuarisUpdate, centre);
+
+                log.info("Reassignar grups professors i alumnes");
+                if (centre.getSincronitzaProfessors()) {
+                    this.reassignarGrupsProfessor();
+                }
+                if (centre.getSincronitzaAlumnes()) {
+                    this.reassignarGrupsAlumne();
+                }
+
+                log.info("Esborrant grups d'usuaris no actius");
+                this.esborrarGrupsUsuarisNoActius();
+
+                log.info("Actualitzant Grups de Correu a la base de dades...");
+                this.createGrupsCorreuGSuiteToDatabase();
+                this.deleteGrupsCorreuGSuiteToDatabase();
+                this.updateGrupsCorreuGSuiteToDatabase();
+
+
+                log.info("Actualitació de centre. Sincronització acabada");
+                this.updateCentre(centre);
+
+                gMailService.sendMessage("Sincronització log", String.join("<br>", logSimulacio), this.adminUser);
+            } catch (Exception e) {
+                log.error("Error durant el procés de sincronització. Es restaurarà l'estat actiu dels usuaris.", e);
+                usuariService.restaurarEstatActiu(estatActiuOriginal);
+                throw e;
+            } finally {
+                centre.setSincronitzant(false);
+                centreService.save(centre);
             }
-            this.desactivarUsuaris();
-            log.info("Actualitzant XML a la base de dades...");
-            List<UsuariDto> usuarisGestib = this.gestibxmltodatabase(centre, usuarisNoActiusBeforeSync);
-
-            log.info("Actualitzant usuaris GSuite a la base de dades...");
-            List<UsuariDto> usuarisGSuite = this.gsuiteuserstodatabase();
-
-            List<UsuariDto> usuarisUpdate = new ArrayList<>();
-            usuarisUpdate.addAll(usuarisGestib);
-            usuarisUpdate.addAll(usuarisGSuite);
-
-            log.info("Creant usuaris nous...");
-            this.createNewUsers(usuarisUpdate, centre);
-
-            log.info("Reassignar grups professors i alumnes");
-            if (centre.getSincronitzaProfessors()) {
-                this.reassignarGrupsProfessor();
-            }
-            if (centre.getSincronitzaAlumnes()) {
-                this.reassignarGrupsAlumne();
-            }
-
-            log.info("Esborrant grups d'usuaris no actius");
-            this.esborrarGrupsUsuarisNoActius();
-
-            log.info("Actualitzant Grups de Correu a la base de dades...");
-            this.createGrupsCorreuGSuiteToDatabase();
-            this.deleteGrupsCorreuGSuiteToDatabase();
-            this.updateGrupsCorreuGSuiteToDatabase();
-
-
-            log.info("Actualitació de centre. Sincronització acabada");
-            this.updateCentre(centre);
-
-            gMailService.sendMessage("Sincronització log", String.join("<br>", logSimulacio), this.adminUser);
-
-            centre.setSincronitzant(false);
-            centreService.save(centre);
         }
     }
 
