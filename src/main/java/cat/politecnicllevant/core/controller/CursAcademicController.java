@@ -44,4 +44,10 @@ public class CursAcademicController {
         return new ResponseEntity<>(cursAcademic, HttpStatus.OK);
     }
 
+    @PostMapping("/cursAcademic/desa")
+    public ResponseEntity<CursAcademicDto> save(@RequestBody CursAcademicDto cursAcademicDto) {
+        CursAcademicDto cursAcademic = cursAcademicService.create(cursAcademicDto);
+        return new ResponseEntity<>(cursAcademic, HttpStatus.OK);
+    }
+
 }
