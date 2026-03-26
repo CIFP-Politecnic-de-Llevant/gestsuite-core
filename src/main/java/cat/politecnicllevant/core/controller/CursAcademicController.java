@@ -46,7 +46,14 @@ public class CursAcademicController {
 
     @PostMapping("/cursAcademic/desa")
     public ResponseEntity<CursAcademicDto> save(@RequestBody CursAcademicDto cursAcademicDto) {
-        CursAcademicDto cursAcademic = cursAcademicService.create(cursAcademicDto);
+        CursAcademicDto cursAcademic;
+
+        if(cursAcademicDto.getIdcursAcademic() != null) {
+            cursAcademic = cursAcademicService.save(cursAcademicDto);
+        } else {
+            cursAcademic = cursAcademicService.create(cursAcademicDto);
+        }
+
         return new ResponseEntity<>(cursAcademic, HttpStatus.OK);
     }
 
