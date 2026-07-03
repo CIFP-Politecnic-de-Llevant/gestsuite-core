@@ -1167,6 +1167,8 @@ public class SincronitzacioController {
 
             NodeList nodesDepartament = doc.getElementsByTagName("DEPARTAMENT");
 
+            Set<String> codisDepartamentXml = this.codisDepartament(nodesDepartament);
+
             for (int i = 0; i < nodesDepartament.getLength(); i++) {
                 Node node = nodesDepartament.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -1176,7 +1178,12 @@ public class SincronitzacioController {
 
                     DepartamentDto d = departamentService.findByGestibIdentificador(codi);
                     if (d == null) {
-                        resultat.add("Nou departament: " + nom);
+                        DepartamentDto departamentExistent = this.findDepartamentAmbCodiObsolet(nom, codisDepartamentXml);
+                        if (departamentExistent != null) {
+                            resultat.add("El departament " + nom + " canvia de codi GestIB: " + departamentExistent.getGestibIdentificador() + " -> " + codi + ". Es mantindran el cap de departament i els grups de correu.");
+                        } else {
+                            resultat.add("Nou departament: " + nom);
+                        }
                     }
                 }
             }
@@ -1450,8 +1457,7 @@ public class SincronitzacioController {
                                 log.info("L'usuari " + u.getGsuiteEmail() + " passa d'inactiu a actiu");
                                 usuarisUpdate.add(u);
                             }
-                            u.setActiu(true);
-                            usuariService.save(u);
+                            usuariService.saveGestib(u, codi, nom, ap1, ap2, usuari, null, null, departament, true, false, null);
                         }
 
                     }
@@ -1551,6 +1557,8 @@ public class SincronitzacioController {
             //Departaments
             NodeList nodesDepartament = doc.getElementsByTagName("DEPARTAMENT");
 
+            Set<String> codisDepartamentXml = this.codisDepartament(nodesDepartament);
+
             for (int i = 0; i < nodesDepartament.getLength(); i++) {
                 Node node = nodesDepartament.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -1560,7 +1568,17 @@ public class SincronitzacioController {
 
                     DepartamentDto d = departamentService.findByGestibIdentificador(codi);
                     if (d == null) {
-                        departamentService.save(codi, nom);
+                        //El GestIB pot canviar el codi d'un departament existent. Si trobem un únic departament
+                        //amb el mateix nom i un codi que ja no surt a l'XML, li actualitzem el codi en lloc de
+                        //crear-ne un de nou, per conservar el cap de departament i els grups de correu associats.
+                        DepartamentDto departamentExistent = this.findDepartamentAmbCodiObsolet(nom, codisDepartamentXml);
+                        if (departamentExistent != null) {
+                            log.info("El departament " + nom + " canvia de codi GestIB: " + departamentExistent.getGestibIdentificador() + " -> " + codi);
+                            departamentExistent.setGestibIdentificador(codi);
+                            departamentService.save(departamentExistent);
+                        } else {
+                            departamentService.save(codi, nom);
+                        }
                     }
                 }
             }
@@ -2576,6 +2594,30 @@ public class SincronitzacioController {
         }
 
         log.info("Acaba sincronització alumnes");
+    }
+
+    private Set<String> codisDepartament(NodeList nodesDepartament) {
+        Set<String> codis = new HashSet<>();
+        for (int i = 0; i < nodesDepartament.getLength(); i++) {
+            Node node = nodesDepartament.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                codis.add(((Element) node).getAttribute("codi"));
+            }
+        }
+        return codis;
+    }
+
+    //Cerca un departament que ha canviat de codi al GestIB: mateix nom i un codi que ja no surt a l'XML.
+    //Només el retorna si és únic, per no migrar malament si hi ha noms repetits.
+    private DepartamentDto findDepartamentAmbCodiObsolet(String nom, Set<String> codisDepartamentXml) {
+        List<DepartamentDto> candidats = departamentService.findAll().stream()
+                .filter(dep -> dep.getGestibNom() != null && dep.getGestibNom().equalsIgnoreCase(nom)
+                        && !codisDepartamentXml.contains(dep.getGestibIdentificador()))
+                .collect(Collectors.toList());
+        if (candidats.size() == 1) {
+            return candidats.get(0);
+        }
+        return null;
     }
 
     private boolean pertanyAlGrup(String emailGroup, List<Group> grupsUsuari) {
