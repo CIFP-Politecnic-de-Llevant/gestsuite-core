@@ -4,8 +4,11 @@ import cat.politecnicllevant.core.dto.google.CalendariRolDto;
 import cat.politecnicllevant.core.dto.google.CalendariTipusUsuariDto;
 import cat.politecnicllevant.core.model.gestib.Usuari;
 import cat.politecnicllevant.core.repository.gestib.UsuariRepository;
+import com.google.api.client.googleapis.json.GoogleJsonError;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.ArrayMap;
@@ -104,8 +107,8 @@ public class GSuiteService {
             }
             return result;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getUsers(retry + 1);
             }
             log.error("Error aconseguint els usuaris de GSuite");
@@ -160,11 +163,11 @@ public class GSuiteService {
             }
             return result;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
-                return getUsers(retry + 1);
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
+                return getUserByIdExternal(id, retry + 1);
             }
-            log.error("Error aconseguint els usuaris de GSuite");
+            log.error("Error cercant usuaris de GSuite per externalId " + id);
             log.error(e.getMessage());
         }
         return new ArrayList<>();
@@ -186,8 +189,8 @@ public class GSuiteService {
 
             return service.users().get(id).execute();
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getUserById(id, retry + 1);
             }
             log.error("Error getUserById. Id=" + id);
@@ -237,8 +240,8 @@ public class GSuiteService {
 
             return service.users().insert(u).execute();
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return createUser(email, nom, cognoms, personalID, unitatOrganitzativa, retry + 1);
             }
             log.error("Error createUser: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa);
@@ -288,16 +291,20 @@ public class GSuiteService {
                     u.setExternalIds(externalIds);
                 }
                 u.setPrimaryEmail(usuari.getGsuiteEmail());
-                u.setOrgUnitPath(unitatOrganitzativa);
+                //Amb unitatOrganitzativa null es conserva la UO que l'usuari té actualment a GSuite (usuaris amb UO bloquejada)
+                if (unitatOrganitzativa != null) {
+                    u.setOrgUnitPath(unitatOrganitzativa);
+                }
 
                 return service.users().update(email, u).execute();
             }
+            log.error("Error updateUser: no existeix cap usuari a la BBDD amb el correu " + email);
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return updateUser(email, nom, cognoms, personalID, unitatOrganitzativa, retry + 1);
             }
-            log.error("Error updateUser: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa);
+            log.error("Error updateUser: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa + " - " + e.getMessage());
         } catch (Exception e) {
             log.error("Error updateUser other: " + email + "-" + nom + "-" + cognoms + "-" + personalID + "-" + unitatOrganitzativa+" - "+e.getMessage());
         }
@@ -325,8 +332,8 @@ public class GSuiteService {
 
             return service.users().update(email, u).execute();
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return suspendreUser(email, suspes, retry + 1);
             }
             log.error("Error suspendreUser: " + email + "-" + suspes);
@@ -359,8 +366,8 @@ public class GSuiteService {
 
             return u;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return resetPassword(email, password, retry + 1);
             }
             log.error("Error resetPassword: " + email + "-" + password);
@@ -408,8 +415,8 @@ public class GSuiteService {
 
             return result;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getGroups(retry + 1);
             }
             log.error("Error getGroups");
@@ -436,8 +443,8 @@ public class GSuiteService {
 
             return group;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getGroupById(idgrup, retry + 1);
             }
             log.error("Error getGroupById. " + idgrup);
@@ -484,8 +491,8 @@ public class GSuiteService {
 
             return result;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getMembers(group, retry + 1);
             }
             log.error("Error getMembers. " + group);
@@ -537,8 +544,8 @@ public class GSuiteService {
 
             return result;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return getUserGroups(emailUser, retry + 1);
             }
             log.error("Error aconseguint els grups d'usuari de " + emailUser);
@@ -546,11 +553,14 @@ public class GSuiteService {
         return new ArrayList<>();
     }
 
-    public void deleteMember(String emailUser, String emailGrup) throws InterruptedException {
-        deleteMember(emailUser, emailGrup, 0);
+    /**
+     * @return true si l'usuari ja no és membre del grup (s'ha esborrat o no hi era)
+     */
+    public boolean deleteMember(String emailUser, String emailGrup) throws InterruptedException {
+        return deleteMember(emailUser, emailGrup, 0);
     }
 
-    private void deleteMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
+    private boolean deleteMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
         if (emailUser == null) {
             log.error("Error eliminant l'usuari. Email d'usuari null");
         } else if (emailGrup == null) {
@@ -570,14 +580,21 @@ public class GSuiteService {
 
                 service.members().delete(emailGrup, emailUser).execute();
                 log.info("S'ha eliminat l'usuari " + emailUser + " del grup " + emailGrup);
+                return true;
             } catch (GeneralSecurityException | IOException e) {
-                if (retry < 5) {
-                    TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
-                    deleteMember(emailUser, emailGrup, retry + 1);
+                if (retry < 5 && esReintentable(e)) {
+                    esperaReintent(retry);
+                    return deleteMember(emailUser, emailGrup, retry + 1);
                 }
-                log.error("Error deleteMember. " + emailUser + " - " + emailGrup);
+                if (e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == 404) {
+                    //Ja no hi és: l'objectiu està assolit
+                    log.info("L'usuari " + emailUser + " ja no era membre del grup " + emailGrup);
+                    return true;
+                }
+                log.error("Error deleteMember. " + emailUser + " - " + emailGrup + " - " + e.getMessage());
             }
         }
+        return false;
     }
 
     public void createMember(String emailUser, String emailGrup) throws InterruptedException {
@@ -603,11 +620,12 @@ public class GSuiteService {
             service.members().insert(emailGrup, m).execute();
             log.info("S'ha afegit l'usuari " + emailUser + " al grup " + emailGrup);
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 createMember(emailUser, emailGrup, retry + 1);
+                return;
             }
-            log.error("Error createMember. " + emailUser + " - " + emailGrup);
+            log.error("Error createMember. " + emailUser + " - " + emailGrup + " - " + e.getMessage());
         }
     }
 
@@ -633,8 +651,8 @@ public class GSuiteService {
 
             return g;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return createGroup(email, nom, descripcio, retry + 1);
             }
             log.error("Error createGroup. " + email + " - " + nom + " - " + descripcio);
@@ -663,8 +681,8 @@ public class GSuiteService {
 
             return g;
         } catch (GeneralSecurityException | IOException e) {
-            if (retry < 5) {
-                TimeUnit.MILLISECONDS.sleep(((2 ^ retry) * 1000L) + getRandomMilliseconds());
+            if (retry < 5 && esReintentable(e)) {
+                esperaReintent(retry);
                 return updateGroup(email, nom, descripcio, retry + 1);
             }
             log.error("Error updateGroup. " + email + " - " + nom + " - " + descripcio);
@@ -832,6 +850,32 @@ public class GSuiteService {
         }
 
         return result;
+    }
+
+    //Els errors 4xx de Google (usuari inexistent, UO invàlida, membre duplicat...) no es resolen reintentant.
+    //Només reintentam errors de xarxa, errors 5xx i límits de quota.
+    private boolean esReintentable(Exception e) {
+        if (!(e instanceof HttpResponseException)) {
+            //Error de xarxa o de credencials: pot ser transitori
+            return true;
+        }
+        int status = ((HttpResponseException) e).getStatusCode();
+        if (status == 429 || status >= 500) {
+            return true;
+        }
+        if (status == 403 && e instanceof GoogleJsonResponseException) {
+            GoogleJsonError details = ((GoogleJsonResponseException) e).getDetails();
+            if (details != null && details.getErrors() != null) {
+                return details.getErrors().stream()
+                        .map(GoogleJsonError.ErrorInfo::getReason)
+                        .anyMatch(reason -> reason != null && (reason.toLowerCase().contains("ratelimitexceeded") || reason.equalsIgnoreCase("quotaExceeded")));
+            }
+        }
+        return false;
+    }
+
+    private void esperaReintent(int retry) throws InterruptedException {
+        TimeUnit.MILLISECONDS.sleep(((1L << retry) * 1000L) + getRandomMilliseconds());
     }
 
     private int getRandomMilliseconds() {
