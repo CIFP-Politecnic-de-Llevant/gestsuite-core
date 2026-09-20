@@ -597,11 +597,19 @@ public class GSuiteService {
         return false;
     }
 
-    public void createMember(String emailUser, String emailGrup) throws InterruptedException {
-        createMember(emailUser, emailGrup, 0);
+    public boolean createMember(String emailUser, String emailGrup) throws InterruptedException {
+        return createMember(emailUser, emailGrup, 0);
     }
 
-    private void createMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
+    private boolean createMember(String emailUser, String emailGrup, int retry) throws InterruptedException {
+        if (emailUser == null) {
+            log.error("Error afegint l'usuari al grup " + emailGrup + ". Email d'usuari null");
+            return false;
+        }
+        if (emailGrup == null) {
+            log.error("Error afegint l'usuari " + emailUser + ". Email del grup null");
+            return false;
+        }
         try {
             String[] scopes = {DirectoryScopes.ADMIN_DIRECTORY_GROUP, DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY};
             GoogleCredentials credentials = null;
@@ -619,14 +627,20 @@ public class GSuiteService {
             m.setRole("MEMBER");
             service.members().insert(emailGrup, m).execute();
             log.info("S'ha afegit l'usuari " + emailUser + " al grup " + emailGrup);
+            return true;
         } catch (GeneralSecurityException | IOException e) {
             if (retry < 5 && esReintentable(e)) {
                 esperaReintent(retry);
-                createMember(emailUser, emailGrup, retry + 1);
-                return;
+                return createMember(emailUser, emailGrup, retry + 1);
+            }
+            if (e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == 409) {
+                //Ja hi és: l'objectiu està assolit
+                log.info("L'usuari " + emailUser + " ja era membre del grup " + emailGrup);
+                return true;
             }
             log.error("Error createMember. " + emailUser + " - " + emailGrup + " - " + e.getMessage());
         }
+        return false;
     }
 
     public Group createGroup(String email, String nom, String descripcio) throws InterruptedException {

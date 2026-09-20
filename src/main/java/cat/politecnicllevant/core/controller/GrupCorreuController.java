@@ -67,6 +67,16 @@ public class GrupCorreuController {
     @Value("${gc.adminDeveloper}")
     private String adminDeveloper;
 
+    //Per identificar un usuari als missatges d'error encara que no tengui correu de GSuite
+    private String nomUsuari(UsuariDto usuari) {
+        if (usuari.getGsuiteEmail() != null && !usuari.getGsuiteEmail().isEmpty()) {
+            return usuari.getGsuiteEmail();
+        }
+        return String.join(" ", Arrays.stream(new String[]{usuari.getGestibNom(), usuari.getGestibCognom1(), usuari.getGestibCognom2()})
+                .filter(n -> n != null && !n.isEmpty())
+                .collect(Collectors.toList()));
+    }
+
     @GetMapping("/grupcorreu/llistat")
     public ResponseEntity<List<GrupCorreuDto>> getGrups(HttpServletRequest request) throws GeneralSecurityException, IOException, InterruptedException {
 
@@ -201,10 +211,24 @@ public class GrupCorreuController {
         UsuariDto usuari = usuariService.findById(Long.valueOf(iduser));
         GrupCorreuDto grupCorreu = grupCorreuService.findByEmail(emailGroup);
 
-        grupCorreuService.insertUsuari(grupCorreu, usuari,false);
-        gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail());
-
         Notificacio notificacio = new Notificacio();
+
+        //Sense correu de GSuite no el podem afegir al grup. Si l'afegíssim només a la BBDD,
+        //la BBDD i el GSuite quedarien desincronitzats sense que ningú se n'assabentés.
+        if (usuari.getGsuiteEmail() == null || usuari.getGsuiteEmail().isEmpty()) {
+            notificacio.setNotifyMessage("L'usuari " + nomUsuari(usuari) + " no té correu de GSuite assignat i no es pot afegir al grup.");
+            notificacio.setNotifyType(NotificacioTipus.ERROR);
+            return new ResponseEntity<>(notificacio, HttpStatus.CONFLICT);
+        }
+
+        if (!gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreu.getGsuiteEmail())) {
+            notificacio.setNotifyMessage("No s'ha pogut afegir l'usuari " + usuari.getGsuiteEmail() + " al grup " + grupCorreu.getGsuiteEmail() + ".");
+            notificacio.setNotifyType(NotificacioTipus.ERROR);
+            return new ResponseEntity<>(notificacio, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        grupCorreuService.insertUsuari(grupCorreu, usuari,false);
+
         notificacio.setNotifyMessage("Usuari "+usuari.getGsuiteEmail()+" afegit correctament al grup");
         notificacio.setNotifyType(NotificacioTipus.SUCCESS);
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
@@ -395,19 +419,29 @@ public class GrupCorreuController {
         }
 
         //Tornem a inserir els usuaris
+        List<String> fallits = new ArrayList<>();
         for (UsuariDto usuari : usuaris.keys()) {
-            gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail());
+            if (!gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail())) {
+                fallits.add(nomUsuari(usuari));
+            }
         }
 
         //Tornem a inserir els grups
         for (GrupCorreuDto grupCorreuMember : grupsCorreu) {
-            gSuiteService.createMember(grupCorreuMember.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail());
+            if (!gSuiteService.createMember(grupCorreuMember.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail())) {
+                fallits.add(grupCorreuMember.getGsuiteEmail());
+            }
         }
 
 
         Notificacio notificacio = new Notificacio();
-        notificacio.setNotifyMessage("Grup desat correctament");
-        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        if (fallits.isEmpty()) {
+            notificacio.setNotifyMessage("Grup desat correctament");
+            notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        } else {
+            notificacio.setNotifyMessage("Grup desat, però no s'han pogut afegir a GSuite: " + String.join(", ", fallits) + ". Revisau que tenguin correu de GSuite assignat.");
+            notificacio.setNotifyType(NotificacioTipus.WARNING);
+        }
 
         log.info("Desar usuari grup acabat");
 
@@ -604,14 +638,22 @@ public class GrupCorreuController {
         }
 
         //Tornem a inserir els usuaris
+        List<String> fallits = new ArrayList<>();
         for (UsuariDto usuari : usuarisGrup) {
-            gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail());
+            if (!gSuiteService.createMember(usuari.getGsuiteEmail(), grupCorreuSaved.getGsuiteEmail())) {
+                fallits.add(nomUsuari(usuari));
+            }
         }
 
 
         Notificacio notificacio = new Notificacio();
-        notificacio.setNotifyMessage("Grup autoemplenat correctament");
-        notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        if (fallits.isEmpty()) {
+            notificacio.setNotifyMessage("Grup autoemplenat correctament");
+            notificacio.setNotifyType(NotificacioTipus.SUCCESS);
+        } else {
+            notificacio.setNotifyMessage("Grup autoemplenat, però no s'han pogut afegir a GSuite: " + String.join(", ", fallits) + ". Revisau que tenguin correu de GSuite assignat.");
+            notificacio.setNotifyType(NotificacioTipus.WARNING);
+        }
 
         log.info("Autoemplenat acabat");
         return new ResponseEntity<>(notificacio, HttpStatus.OK);
