@@ -38,6 +38,11 @@ public class SubmateriaService {
         return null;
     }
 
+    public List<SubmateriaDto> findByCurs(String codiCurs) {
+        ModelMapper modelMapper = new ModelMapper();
+        return submateriaRepository.findAllByGestibCurs(codiCurs).stream().map(s->modelMapper.map(s,SubmateriaDto.class)).collect(Collectors.toList());
+    }
+
     @Transactional
     public void deleteAllSubmateries() {
         submateriaRepository.deleteAllInBatch();

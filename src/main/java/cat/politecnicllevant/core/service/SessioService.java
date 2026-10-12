@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,6 +76,22 @@ public class SessioService {
         } else {
             return new ArrayList<>();
         }
+    }
+
+    /**
+     * Sessions de professors que imparteixen alguna de les submatèries o activitats indicades.
+     */
+    public List<SessioDto> findSessionsProfessorsBySubmateriesOrActivitats(Collection<String> submateries, Collection<String> activitats) {
+        ModelMapper modelMapper = new ModelMapper();
+        List<Sessio> sessions = new ArrayList<>();
+        // Un IN buit genera SQL invàlid a MySQL
+        if (!submateries.isEmpty()) {
+            sessions.addAll(sessioRepository.findAllByGestibProfessorIsNotNullAndGestibSubmateriaIn(submateries));
+        }
+        if (!activitats.isEmpty()) {
+            sessions.addAll(sessioRepository.findAllByGestibProfessorIsNotNullAndGestibActivitatIn(activitats));
+        }
+        return sessions.stream().map(s->modelMapper.map(s,SessioDto.class)).collect(Collectors.toList());
     }
 
     public List<SessioDto> findSessionsAlumne(UsuariDto alumne) {

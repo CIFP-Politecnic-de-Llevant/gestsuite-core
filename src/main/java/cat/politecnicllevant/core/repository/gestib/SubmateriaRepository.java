@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface SubmateriaRepository extends JpaRepository<Submateria, Long> {
     Submateria findSubmateriaByGestibIdentificador(String identificador);
+
+    List<Submateria> findAllByGestibCurs(String curs);
 }

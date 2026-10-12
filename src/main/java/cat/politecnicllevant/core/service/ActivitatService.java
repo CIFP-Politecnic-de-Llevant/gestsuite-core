@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class ActivitatService {
     @Autowired
@@ -39,6 +42,11 @@ public class ActivitatService {
             return modelMapper.map(activitat, ActivitatDto.class);
         }
         return null;
+    }
+
+    public List<ActivitatDto> findAll() {
+        ModelMapper modelMapper = new ModelMapper();
+        return activitatRepository.findAll().stream().map(a->modelMapper.map(a,ActivitatDto.class)).collect(Collectors.toList());
     }
 
     @Transactional

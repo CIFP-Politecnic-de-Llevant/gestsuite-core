@@ -247,41 +247,35 @@ public class UsuariController {
     public ResponseEntity<List<UsuariDto>> getTutorFCT() {
         List<UsuariDto> tutorsFCT = new ArrayList<>();
 
+        // Carreguem d'una vegada les submatèries i activitats FCT i els professors que les imparteixen,
+        // en lloc de consultar-les sessió a sessió per a cada professor
+        Set<String> codisSubmateriesFCT = submateriaService.findAll().stream()
+                .filter(s -> esFCT(s.getGestibNom(), s.getGestibNomCurt()))
+                .map(SubmateriaDto::getGestibIdentificador)
+                .collect(Collectors.toSet());
+        Set<String> codisActivitatsFCT = activitatService.findAll().stream()
+                .filter(a -> esFCT(a.getGestibNom(), a.getGestibNomCurt()))
+                .map(ActivitatDto::getGestibIdentificador)
+                .collect(Collectors.toSet());
+
+        Set<String> codisProfessorsFCT = sessioService
+                .findSessionsProfessorsBySubmateriesOrActivitats(codisSubmateriesFCT, codisActivitatsFCT).stream()
+                .map(SessioDto::getGestibProfessor)
+                .collect(Collectors.toSet());
+
         List<UsuariDto> professors = usuariService.findProfessors();
-
         for (UsuariDto profe : professors) {
-            List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
-            for (SessioDto sessio : sessions) {
-                String codiGestibSubmateria = sessio.getGestibSubmateria();
-                if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
-                    SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
-
-                    if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
-                            (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
-                            && profe.getActiu()
-                    ) {
-                        System.out.println("SUBMATERIA" + sessio + "-----" + sessio.getGestibGrup());
-                        tutorsFCT.add(profe);
-                        break;
-                    }
-                }
-                String codiGestibActivitat = sessio.getGestibActivitat();
-                if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
-                    ActivitatDto activitat = activitatService.findByGestibIdentificador(codiGestibActivitat);
-
-                    if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
-                            (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
-                            && profe.getActiu()
-                    ) {
-                        System.out.println("ACTIVITAT" + sessio + "-----" + sessio.getGestibGrup());
-                        tutorsFCT.add(profe);
-                        break;
-                    }
-                }
+            if (!Boolean.TRUE.equals(profe.getActiu())) {
+                continue;
             }
 
+            // Imparteix alguna submatèria o activitat FCT
+            boolean imparteixFCT = profe.getGestibCodi() != null && codisProfessorsFCT.contains(profe.getGestibCodi());
+
             //Comprovem també si té el rol de Tutor FCT
-            if(profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
+            boolean rolTutorFCT = profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT);
+
+            if (imparteixFCT || rolTutorFCT) {
                 tutorsFCT.add(profe);
             }
         }
@@ -299,78 +293,74 @@ public class UsuariController {
         List<UsuariDto> tutorsFCT = new ArrayList<>();
 
         List<CursDto> cursos = cursService.findByGestibNom(codiCurs);
-        if (cursos != null && !cursos.isEmpty()) {
-            CursDto curs = cursos.get(0);
-            List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup, curs.getGestibIdentificador());
-            GrupDto grup = grups.get(0);
+        if (cursos == null || cursos.isEmpty()) {
+            return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
+        }
+        CursDto curs = cursos.get(0);
 
-            List<UsuariDto> professors = usuariService.findProfessors();
-            for (UsuariDto profe : professors) {
-                System.out.println("Usuari:" + profe.getGsuiteFullName() + "Email:" + profe.getGsuiteEmail());
+        List<GrupDto> grups = grupService.findByGestibNomAndCurs(codiGrup, curs.getGestibIdentificador());
+        if (grups == null || grups.isEmpty()) {
+            return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
+        }
+        GrupDto grup = grups.get(0);
 
-                boolean imparteixSubmateriaGrup = false;
+        // Carreguem d'una vegada les submatèries del curs, les activitats FCT i les sessions que les imparteixen,
+        // en lloc de consultar-les sessió a sessió per a cada professor
+        List<SubmateriaDto> submateriesCurs = submateriaService.findByCurs(curs.getGestibIdentificador());
+        Set<String> codisSubmateriesCurs = submateriesCurs.stream()
+                .map(SubmateriaDto::getGestibIdentificador)
+                .collect(Collectors.toSet());
+        Set<String> codisSubmateriesFCT = submateriesCurs.stream()
+                .filter(s -> esFCT(s.getGestibNom(), s.getGestibNomCurt()))
+                .map(SubmateriaDto::getGestibIdentificador)
+                .collect(Collectors.toSet());
+        Set<String> codisActivitatsFCT = activitatService.findAll().stream()
+                .filter(a -> esFCT(a.getGestibNom(), a.getGestibNomCurt()))
+                .map(ActivitatDto::getGestibIdentificador)
+                .collect(Collectors.toSet());
 
-                List<SessioDto> sessions = sessioService.findSessionsProfessor(profe);
-                for (SessioDto sessio : sessions) {
-                    String codiGestibSubmateria = sessio.getGestibSubmateria();
-                    if (codiGestibSubmateria != null && !codiGestibSubmateria.isEmpty()) {
-                        SubmateriaDto submateria = submateriaService.findByGestibIdentificador(codiGestibSubmateria);
+        Map<String, List<SessioDto>> sessionsPerProfessor = sessioService
+                .findSessionsProfessorsBySubmateriesOrActivitats(codisSubmateriesCurs, codisActivitatsFCT).stream()
+                .collect(Collectors.groupingBy(SessioDto::getGestibProfessor));
 
-                        if(submateria != null && submateria.getGestibCurs() != null
-                                && profe.getActiu()
-                                && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
-                        ) {
-                            imparteixSubmateriaGrup = true;
-                        }
+        List<UsuariDto> professors = usuariService.findProfessors();
+        for (UsuariDto profe : professors) {
+            String codiProfe = profe.getGestibCodi();
+            boolean actiu = Boolean.TRUE.equals(profe.getActiu());
+            List<SessioDto> sessions = codiProfe != null ? sessionsPerProfessor.getOrDefault(codiProfe, List.of()) : List.of();
 
-                        if (submateria != null && submateria.getGestibNom() != null && submateria.getGestibNomCurt() != null &&
-                                (submateria.getGestibNom().contains("Formació en centres de treball") || submateria.getGestibNom().contains("FCT") || submateria.getGestibNomCurt().contains("Formació en centres de treball") || submateria.getGestibNomCurt().contains("FCT"))
-                                && profe.getActiu()
-                                && submateria.getGestibCurs().equals(curs.getGestibIdentificador())
-                        ) {
-                            tutorsFCT.add(profe);
-                            break;
-                        }
-                    }
-                    String codiGestibActivitat = sessio.getGestibActivitat();
-                    if (codiGestibActivitat != null && !codiGestibActivitat.isEmpty()) {
-                        ActivitatDto activitat = activitatService.findByGestibIdentificador(codiGestibActivitat);
+            // Imparteix la submatèria FCT del curs
+            boolean imparteixSubmateriaFCT = sessions.stream()
+                    .anyMatch(s -> codisSubmateriesFCT.contains(s.getGestibSubmateria()));
 
-                        if (activitat != null && activitat.getGestibNom() != null && activitat.getGestibNomCurt() != null &&
-                                (activitat.getGestibNom().contains("Formació en centres de treball") || activitat.getGestibNom().contains("FCT") || activitat.getGestibNomCurt().contains("Formació en centres de treball") || activitat.getGestibNomCurt().contains("FCT"))
-                                && profe.getActiu()
-                                && (grup.getGestibTutor1().contains(profe.getGestibCodi()) ||
-                                grup.getGestibTutor2().contains(profe.getGestibCodi()) ||
-                                grup.getGestibTutor3().contains(profe.getGestibCodi()))
-                        ) {
-                            tutorsFCT.add(profe);
-                            break;
-                        }
-                    }
-                }
+            // Té una activitat FCT i és tutor del grup
+            boolean activitatFCTiTutor = codiProfe != null
+                    && sessions.stream().anyMatch(s -> codisActivitatsFCT.contains(s.getGestibActivitat()))
+                    && (conte(grup.getGestibTutor1(), codiProfe) || conte(grup.getGestibTutor2(), codiProfe) || conte(grup.getGestibTutor3(), codiProfe));
 
-                // Comprovem si és tutor del grup
-                if(!tutorsFCT.contains(profe)){
-                    List<GrupDto> grupsProfeAsTutor = grupService.findByTutor(profe);
-                    for (GrupDto grupProfe : grupsProfeAsTutor) {
-                        for(GrupDto grupTutor : grups) {
-                            if (!tutorsFCT.contains(profe) && grupProfe.getGestibIdentificador().equals(grupTutor.getGestibIdentificador())) {
-                                tutorsFCT.add(profe);
-                                break;
-                            }
-                        }
-                    }
-                }
+            // És tutor del grup
+            boolean esTutorGrup = codiProfe != null && grups.stream().anyMatch(g ->
+                    codiProfe.equals(g.getGestibTutor1()) || codiProfe.equals(g.getGestibTutor2()) || codiProfe.equals(g.getGestibTutor3()));
 
-                //Si imparteix alguna submatèria al grup comprovem també si té el rol de Tutor FCT
-                if(imparteixSubmateriaGrup && profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT) && profe.getActiu()){
-                    tutorsFCT.add(profe);
-                }
+            // Té el rol de Tutor FCT i imparteix alguna submatèria del curs
+            boolean rolTutorFCT = profe.getRols() != null && profe.getRols().contains(RolDto.TUTOR_FCT)
+                    && sessions.stream().anyMatch(s -> codisSubmateriesCurs.contains(s.getGestibSubmateria()));
 
+            if ((actiu && (imparteixSubmateriaFCT || activitatFCTiTutor || rolTutorFCT)) || esTutorGrup) {
+                tutorsFCT.add(profe);
             }
         }
 
         return new ResponseEntity<>(tutorsFCT, HttpStatus.OK);
+    }
+
+    private static boolean esFCT(String nom, String nomCurt) {
+        return nom != null && nomCurt != null &&
+                (nom.contains("Formació en centres de treball") || nom.contains("FCT") || nomCurt.contains("Formació en centres de treball") || nomCurt.contains("FCT"));
+    }
+
+    private static boolean conte(String text, String valor) {
+        return text != null && text.contains(valor);
     }
 
 
