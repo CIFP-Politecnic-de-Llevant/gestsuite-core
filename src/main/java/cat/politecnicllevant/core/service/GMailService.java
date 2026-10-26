@@ -132,14 +132,35 @@ public class GMailService {
         Gmail service = new Gmail.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).build();
 
         String body = "Prova cos missatge<br> salt de línia i &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tabulació 3";
-        body += "<br><br> Avís: Aquest missatgé és automàtic. No contesti aquest missatge. Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
+        body += peuMissatge(true, null);
         body += "<table><tr><td>Hola</td></tr></table>";
         MimeMessage mimeMessage = createEmail(this.adminUser, this.emailNotificacions, "Prova email", body,true);
         Message email = sendMessage(service, this.emailNotificacions, mimeMessage);
     }
 
 
+    /**
+     * Peu que s'afegeix a tots els correus automàtics.
+     *
+     * @param contacte text de contacte per als dubtes sobre el contingut del missatge (p.ex. el correu d'oficines i el telèfon).
+     *                 Si és nul o buit, es remet a l'administrador per a qualsevol dubte.
+     */
+    private String peuMissatge(boolean isHTML, String contacte) {
+        String peu = "Avís: Aquest missatge és automàtic. No contesti aquest missatge. ";
+        if(contacte == null || contacte.isBlank()){
+            peu += "Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
+        } else {
+            peu += "Per a qualsevol dubte sobre el contingut d'aquest missatge adreci's a "+contacte.trim()+". ";
+            peu += "Per a dubtes tècnics de l'aplicació enviï un correu a "+this.adminUser+". Gràcies!";
+        }
+        return (isHTML ? "<br><br> " : "\n\n ") + peu;
+    }
+
     public void sendMessage(String assumpte, String missatge, String to, boolean isHTML) throws MessagingException, IOException, GeneralSecurityException {
+        sendMessage(assumpte,missatge,to,isHTML,null);
+    }
+
+    public void sendMessage(String assumpte, String missatge, String to, boolean isHTML, String contacte) throws MessagingException, IOException, GeneralSecurityException {
         String[] scopes = {GmailScopes.GMAIL_COMPOSE};
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser).createDelegated(this.emailNotificacions);
         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
@@ -148,12 +169,7 @@ public class GMailService {
 
         Gmail service = new Gmail.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).build();
 
-        String body = missatge;
-        if(isHTML){
-            body += "<br><br> Avís: Aquest missatgé és automàtic. No contesti aquest missatge. Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
-        } else {
-            body += "\n\n Avís: Aquest missatgé és automàtic. No contesti aquest missatge. Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
-        }
+        String body = missatge + peuMissatge(isHTML, contacte);
         MimeMessage mimeMessage = createEmail(to, this.emailNotificacions, assumpte, body,isHTML);
         Message email = sendMessage(service, this.emailNotificacions, mimeMessage);
     }
@@ -164,6 +180,10 @@ public class GMailService {
 
 
     public void sendMessageWithAttachment(String assumpte, String missatge, String to, boolean isHTML, File file) throws MessagingException, IOException, GeneralSecurityException {
+        sendMessageWithAttachment(assumpte,missatge,to,isHTML,file,null);
+    }
+
+    public void sendMessageWithAttachment(String assumpte, String missatge, String to, boolean isHTML, File file, String contacte) throws MessagingException, IOException, GeneralSecurityException {
         String[] scopes = {GmailScopes.GMAIL_COMPOSE};
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(this.keyFile)).createScoped(scopes).createDelegated(this.adminUser).createDelegated(this.emailNotificacions);
         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
@@ -172,12 +192,7 @@ public class GMailService {
 
         Gmail service = new Gmail.Builder(HTTP_TRANSPORT, GsonFactory.getDefaultInstance(), requestInitializer).build();
 
-        String body = missatge;
-        if(isHTML){
-            body += "<br><br> Avís: Aquest missatgé és automàtic. No contesti aquest missatge. Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
-        } else {
-            body += "\n\n Avís: Aquest missatgé és automàtic. No contesti aquest missatge. Si vol adreçar-se a l'administrador enviï un correu a "+this.adminUser+". Gràcies!";
-        }
+        String body = missatge + peuMissatge(isHTML, contacte);
         MimeMessage mimeMessage = createEmail(to, this.emailNotificacions, assumpte, body,isHTML);
 
 

@@ -219,6 +219,10 @@ public class GSuiteController {
 
     @PostMapping(value="/gsuite/sendemailattachment")
     public void sendEmail(@RequestParam("to") String to, @RequestParam("assumpte") String assumpte, @RequestParam("body") String bodyHTML, @RequestParam File file) throws IOException, MessagingException, GeneralSecurityException {
+        this.sendEmail(to,assumpte,bodyHTML,file,null);
+    }
+
+    private void sendEmail(String to, String assumpte, String bodyHTML, File file, String contacte) throws IOException, MessagingException, GeneralSecurityException {
         InputStream is = new FileInputStream(file);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -239,14 +243,18 @@ public class GSuiteController {
         System.out.println("Params: "+to+" - "+assumpte+" - "+bodyHTML);
         log.info("Params: "+to+" - "+assumpte+" - "+bodyHTML);
 
-        gMailService.sendMessageWithAttachment(assumpte,bodyHTML,to,true,f);
+        gMailService.sendMessageWithAttachment(assumpte,bodyHTML,to,true,f,contacte);
         //gMailService.sendMessage(assumpte,bodyHTML,to);
     }
 
+    /**
+     * @param contacte (opcional) text de contacte per als dubtes sobre el contingut del missatge (correu, telèfon...).
+     *                 Si no s'indica, el peu del correu remet a l'administrador.
+     */
     @PostMapping(value="/gsuite/sendemailattachment-path")
-    public void sendEmailAttachmentPath(@RequestParam("to") String to, @RequestParam("assumpte") String assumpte, @RequestParam("body") String bodyHTML, @RequestParam("path") String filepath) throws IOException, MessagingException, GeneralSecurityException {
+    public void sendEmailAttachmentPath(@RequestParam("to") String to, @RequestParam("assumpte") String assumpte, @RequestParam("body") String bodyHTML, @RequestParam("path") String filepath, @RequestParam(value="contacte", required=false) String contacte) throws IOException, MessagingException, GeneralSecurityException {
         File file = new File(filepath);
-        this.sendEmail(to,assumpte,bodyHTML,file);
+        this.sendEmail(to,assumpte,bodyHTML,file,contacte);
     }
 
 /*
