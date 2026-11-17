@@ -97,7 +97,10 @@ public class GrupService {
 
     public List<GrupDto> findByTutor(UsuariDto u) {
         ModelMapper modelMapper = new ModelMapper();
-        return grupRepository.findAllByGestibTutor1OrGestibTutor2OrGestibTutor3(u.getGestibCodi(), u.getGestibCodi(), u.getGestibCodi()).stream().map(g->modelMapper.map(g,GrupDto.class)).collect(Collectors.toList());
+        //Només grups actius: els grups de cursos anteriors queden inactius però conserven els tutors
+        return grupRepository.findAllByGestibTutor1OrGestibTutor2OrGestibTutor3(u.getGestibCodi(), u.getGestibCodi(), u.getGestibCodi()).stream()
+                .filter(g -> Boolean.TRUE.equals(g.getActiu()))
+                .map(g->modelMapper.map(g,GrupDto.class)).collect(Collectors.toList());
     }
 
     public List<GrupDto> findAll(){
